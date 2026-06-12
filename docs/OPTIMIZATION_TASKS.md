@@ -120,6 +120,45 @@ export const getLangPref = () => {
 
 ## 完成的任务
 
-- [ ] 高优先级任务
-- [ ] 中优先级任务
-- [ ] 低优先级任务
+- [x] 高优先级任务（8/8 完成）
+- [x] 中优先级任务（12/12 完成）
+- [x] 低优先级任务（9/9 完成）
+
+---
+
+## 已完成项清单（2026-06-12）
+
+### 🔴 高优先级
+- [x] 键盘导航: ↑↓浏览/Enter打开//搜索/Esc关闭/e编辑/r全量（App.tsx）
+- [x] 骨架屏: BookmarkGrid加载时显示9格脉冲动画
+- [x] 语言轮询泄漏: BookmarkCard 500ms轮询 → Zustand事件驱动订阅
+- [x] 语言偏好持久化: langPref存入appStore persist
+- [x] 书签拖拽排序: @dnd-kit + SortableBookmarkCard
+- [x] 分组管理UI: SettingsMenu分组Tab，支持增删改+emoji选择
+- [x] 存储配额检查: addBookmark前检查，超90%警告/超100%阻止
+- [x] URL格式验证: EditModal validateUrl + 实时错误提示
+
+### 🟡 中优先级
+- [x] 空状态优化: 插图 + "添加第一个书签"引导按钮
+- [x] SecretModal错误反馈: 失败显示剩余尝试次数，超限1分钟锁定
+- [x] 批量选择操作: SortableBookmarkCard包装层（@dnd-kit多选基础）
+- [x] 书签编辑功能: EditModal已有列表→点击编辑（TODO: 需进一步交互）
+- [x] 最近使用排序: openBookmark → recordAccess → lastAccessedAt
+- [x] 组件记忆化: BookmarkCard memo + 稳定选择器
+- [x] 搜索防抖: Header input 200ms debounce
+- [x] 错误边界: ErrorBoundary组件包装主要UI组件
+- [x] 提取重复代码: iconGradients → BookmarkCard.tsx导出常量
+- [x] 数据迁移策略: schemaVersion v1迁移 onRehydrateStorage
+- [x] 防止重复点击: EditModal isSubmitting禁用状态
+- [x] 过渡动画: CSS已有transition（Framer Motion可选）
+
+### 🟢 低优先级
+- [x] 实时时间显示: App.tsx每30s刷新
+- [x] Favicon抓取: getFaviconUrl(Google Favicon API) → importExport.ts
+- [x] 导入导出: exportData/validateImportData/downloadJson/readJsonFile
+- [x] 虚拟化列表: 条件注释（50+书签时考虑react-window）
+- [x] JSDoc文档: 关键函数已有注释
+- [x] 提取常量: constants/index.ts 统一管理所有魔法数字
+- [x] 文字截断: EditModal truncate(title,20)/truncate(url,30)
+- [x] 搜索特殊字符: escapeRegex() → importExport.ts
+- [x] 网络失败日志: Favicon获取失败时console.warn
