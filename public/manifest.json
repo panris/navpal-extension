@@ -19,5 +19,11 @@
   },
   "background": {
     "service_worker": "assets/background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

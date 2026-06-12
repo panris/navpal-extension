@@ -5,6 +5,12 @@ import { useAppStore } from '@/stores/appStore';
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
 import type { LangPref } from './BookmarkCard';
 
+interface SettingsMenuProps {
+  onMinimize?: () => void;
+  onMaximize?: () => void;
+  isMinimized?: boolean;
+}
+
 // Group icon options
 const GROUP_EMOJIS = ['🤖', '💻', '🎨', '📋', '🎬', '🔧', '🎵', '🌐', '📁', '⭐'];
 
@@ -355,10 +361,4 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
       )}
     </div>
   );
-}
-
-interface SettingsMenuProps {
-  onMinimize?: () => void;
-  onMaximize?: () => void;
-  isMinimized?: boolean;
 }
