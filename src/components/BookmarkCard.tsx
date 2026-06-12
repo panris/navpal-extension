@@ -90,6 +90,7 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
   const isRevealMode = useAppStore((s) => s.isRevealMode);
   const updateBookmark = useAppStore((s) => s.updateBookmark);
   const deleteBookmark = useAppStore((s) => s.deleteBookmark);
+  const openBookmark = useAppStore((s) => s.openBookmark);
 
   const iconStyle = getIconStyle(bookmark.id);
   const iconLetter = getIconLetter(bookmark.url, bookmark.title);
@@ -106,9 +107,8 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
 
   const handleClick = useCallback(() => {
     if (isEditMode) return;
-    window.open(bookmark.url, '_blank');
-    window.close();
-  }, [isEditMode, bookmark.url]);
+    openBookmark(bookmark.id);
+  }, [isEditMode, bookmark.id, openBookmark]);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);

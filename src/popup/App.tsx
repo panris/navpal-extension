@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAppStore, useVisibleGroups, useVisibleBookmarks } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
@@ -6,6 +6,7 @@ import BookmarkGrid from '@/components/BookmarkGrid';
 import Footer from '@/components/Footer';
 import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 type ViewMode = 'default' | 'minimized' | 'maximized';
 
@@ -155,11 +156,15 @@ export default function App() {
       ) : (
         <>
           {/* Group Tabs */}
-          <GroupTabs />
+          <ErrorBoundary>
+            <GroupTabs />
+          </ErrorBoundary>
           
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4">
-            <BookmarkGrid bookmarks={filteredBookmarks} />
+            <ErrorBoundary>
+              <BookmarkGrid bookmarks={filteredBookmarks} />
+            </ErrorBoundary>
           </main>
           
           {/* Footer */}
@@ -168,8 +173,12 @@ export default function App() {
       )}
 
       {/* Modals */}
-      <EditModal />
-      <SecretModal />
+      <ErrorBoundary>
+        <EditModal />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <SecretModal />
+      </ErrorBoundary>
 
       {/* Home Indicator */}
       {viewMode !== 'minimized' && <div className="home-indicator" />}

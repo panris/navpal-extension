@@ -12,6 +12,7 @@ export interface Bookmark {
   order: number;
   createdAt: number;
   updatedAt: number;
+  lastAccessedAt?: number; // 最近访问时间戳（ms）
   // 中英文介绍
   description?: {
     en: string;
@@ -42,6 +43,9 @@ export interface AppSettings {
 
   // 数据设置
   storageQuota: number;            // 100KB 限制
+
+  // Schema 版本（用于数据迁移）
+  schemaVersion: number;
 }
 
 export interface AppState {

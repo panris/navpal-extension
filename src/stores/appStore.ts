@@ -3,19 +3,17 @@ import { persist } from 'zustand/middleware';
 import { AppState, Group, Bookmark } from '@/types';
 import { generateId, autoDetectRegion } from '@/utils';
 import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/seedData';
+import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
 import type { LangPref } from '@/components/BookmarkCard';
 
-// Storage quota check
-export const STORAGE_QUOTA_KB = 100;
-export const STORAGE_WARN_RATIO = 0.9;
-
+// ─── Storage quota ───────────────────────────────────────────────
 function checkStorageQuota(data: object): { allowed: boolean; usedKB: number; percent: number } {
   const usedKB = new Blob([JSON.stringify(data)]).size / 1024;
   const percent = (usedKB / STORAGE_QUOTA_KB) * 100;
   return { allowed: percent < 100, usedKB, percent };
 }
 
-// Language preference store (for cross-component subscription)
+// ─── Language event bus ──────────────────────────────────────────
 type LangListener = (lang: 'zh' | 'en') => void;
 const langListeners = new Set<LangListener>();
 let currentLang: 'zh' | 'en' = 'zh';
@@ -38,21 +36,37 @@ export function getEffectiveLang(pref: LangPref): 'zh' | 'en' {
   return pref;
 }
 
-export const useAppStore = create<AppState & { langPref: LangPref; setLangPref: (p: LangPref) => void }>()(
+// ─── Data migration ───────────────────────────────────────────────
+function migrateData(state: { groups: Group[]; bookmarks: Bookmark[]; settings: { schemaVersion?: number } }): typeof state {
+  const version = state.settings?.schemaVersion ?? 0;
+  if (version >= CURRENT_SCHEMA_VERSION) return state;
+
+  // v0 → v1: add schemaVersion, lastAccessedAt
+  const migrated = {
+    ...state,
+    bookmarks: state.bookmarks.map((b) => ({ ...b, lastAccessedAt: b.lastAccessedAt ?? 0 })),
+    settings: { ...DEFAULT_SETTINGS, ...state.settings, schemaVersion: CURRENT_SCHEMA_VERSION },
+  };
+
+  console.info(`[NavPal] Data migrated from v${version} → v${CURRENT_SCHEMA_VERSION}`);
+  return migrated;
+}
+
+// ─── Store ────────────────────────────────────────────────────────
+export const useAppStore = create<
+  AppState & { langPref: LangPref; setLangPref: (p: LangPref) => void }
+>()(
   persist(
     (set, get) => ({
-      // 初始数据
       groups: DEFAULT_GROUPS,
       bookmarks: DEFAULT_BOOKMARKS,
       settings: DEFAULT_SETTINGS,
 
-      // 运行时状态
       isRevealMode: false,
       isEditMode: false,
       activeGroupId: null,
       searchQuery: '',
 
-      // 语言偏好
       langPref: 'auto',
       setLangPref: (pref) => {
         const lang = getEffectiveLang(pref);
@@ -120,6 +134,7 @@ export const useAppStore = create<AppState & { langPref: LangPref; setLangPref: 
           order: groupBookmarks.length,
           createdAt: Date.now(),
           updatedAt: Date.now(),
+          lastAccessedAt: 0,
         };
 
         const newBookmarks = [...state.bookmarks, newBookmark];
@@ -174,6 +189,25 @@ export const useAppStore = create<AppState & { langPref: LangPref; setLangPref: 
         });
       },
 
+      // 记录访问时间（最近使用排序用）
+      recordAccess: (id) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id ? { ...b, lastAccessedAt: Date.now() } : b
+          ),
+        }));
+      },
+
+      // 打开书签（记录访问 + 跳转）
+      openBookmark: (id) => {
+        const bookmark = get().bookmarks.find((b) => b.id === id);
+        if (!bookmark) return;
+        // 先记录访问，再跳转
+        get().recordAccess(id);
+        window.open(bookmark.url, '_blank');
+        window.close();
+      },
+
       // 设置操作
       updateSettings: (updates) => {
         set((state) => ({
@@ -183,24 +217,29 @@ export const useAppStore = create<AppState & { langPref: LangPref; setLangPref: 
     }),
     {
       name: 'navpal-storage',
+      // 数据迁移入口
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          const migrated = migrateData(state as unknown as { groups: Group[]; bookmarks: Bookmark[]; settings: { schemaVersion?: number } });
+          state.groups = migrated.groups;
+          state.bookmarks = migrated.bookmarks;
+          state.settings = migrated.settings as AppState['settings'];
+        }
+      },
     }
   )
 );
 
-// 选择器
+// ─── Selectors ────────────────────────────────────────────────────
 export const useVisibleGroups = () =>
   useAppStore((state) => {
-    if (state.isRevealMode) {
-      return state.groups;
-    }
+    if (state.isRevealMode) return state.groups;
     return state.groups.filter((g) => !g.hidden);
   });
 
 export const useVisibleBookmarks = () =>
   useAppStore((state) => {
-    if (state.isRevealMode) {
-      return state.bookmarks;
-    }
+    if (state.isRevealMode) return state.bookmarks;
     return state.bookmarks.filter((b) => !b.hidden);
   });
 
