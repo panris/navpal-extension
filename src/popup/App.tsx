@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAppStore, useVisibleGroups, useVisibleBookmarks } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
@@ -9,15 +9,25 @@ import SecretModal from '@/components/SecretModal';
 
 type ViewMode = 'default' | 'minimized' | 'maximized';
 
+function formatTime(): string {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 export default function App() {
   const isRevealMode = useAppStore((state) => state.isRevealMode);
   const exitRevealMode = useAppStore((state) => state.exitRevealMode);
   const activeGroupId = useAppStore((state) => state.activeGroupId);
   const setActiveGroup = useAppStore((state) => state.setActiveGroup);
+  const toggleEditMode = useAppStore((state) => state.toggleEditMode);
+  const revealMode = useAppStore((state) => state.revealMode);
   const groups = useVisibleGroups();
   const bookmarks = useVisibleBookmarks();
 
   const [viewMode, setViewMode] = useState<ViewMode>('default');
+  const [currentTime, setCurrentTime] = useState(formatTime);
 
   // 设置默认选中的分组
   useEffect(() => {
@@ -25,6 +35,12 @@ export default function App() {
       setActiveGroup(groups[0].id);
     }
   }, [activeGroupId, groups, setActiveGroup]);
+
+  // Real-time clock
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(formatTime()), 30000);
+    return () => clearInterval(tick);
+  }, []);
 
   // 关闭 Popup 时退出全量模式
   useEffect(() => {
@@ -58,13 +74,44 @@ export default function App() {
     setViewMode('default');
   };
 
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const tag = (e.target as HTMLElement).tagName;
+    // Don't intercept when typing in inputs
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    switch (e.key) {
+      case '/':
+      case 'k':
+        if (e.ctrlKey || e.key === '/') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('navpal:focus', { detail: { focus: 'search' } }));
+        }
+        break;
+      case 'Escape':
+        if (isRevealMode) exitRevealMode();
+        break;
+      case 'e':
+        if (!e.ctrlKey && !e.metaKey) toggleEditMode();
+        break;
+      case 'r':
+        if (!e.ctrlKey && !e.metaKey) revealMode();
+        break;
+    }
+  }, [isRevealMode, exitRevealMode, toggleEditMode, revealMode]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
     <div className={`flex flex-col bg-gray-50 relative overflow-hidden transition-all duration-300 ${
     viewMode === 'minimized' ? 'h-16' : viewMode === 'maximized' ? 'h-screen' : 'h-screen'
     }`}>
       {/* Status Bar */}
       <div className="status-bar">
-        <span className="font-semibold">9:41</span>
+        <span className="font-semibold">{currentTime}</span>
         <div className="flex items-center gap-1">
           {/* Signal */}
           <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" className="opacity-80">

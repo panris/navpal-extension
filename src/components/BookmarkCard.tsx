@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Lock } from 'lucide-react';
 import { Bookmark } from '@/types';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore, subscribeLang } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
 
-// Color palette for icons - expanded with more distinct colors
-const iconGradients = [
+// Color palette for icons - extracted to shared constant
+export const ICON_GRADIENTS = [
   { bg: 'from-violet-500 to-purple-600', border: 'border-violet-400', glow: 'shadow-violet-500/30' },
   { bg: 'from-pink-500 to-rose-500', border: 'border-pink-400', glow: 'shadow-pink-500/30' },
   { bg: 'from-cyan-500 to-blue-500', border: 'border-cyan-400', glow: 'shadow-cyan-500/30' },
@@ -19,18 +19,28 @@ const iconGradients = [
   { bg: 'from-lime-500 to-emerald-500', border: 'border-lime-400', glow: 'shadow-lime-500/30' },
 ];
 
+export type LangPref = 'auto' | 'zh' | 'en';
+
+// Re-export for SettingsMenu compatibility
+export { subscribeLang };
+
+export function getLangPref(): LangPref {
+  return useAppStore.getState().langPref;
+}
+
+export function setLangPref(pref: LangPref) {
+  useAppStore.getState().setLangPref(pref);
+}
+
 function getIconStyle(id: string) {
-  // Convert string id to a numeric index
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) - hash) + id.charCodeAt(i);
     hash = hash & hash;
   }
-  const index = Math.abs(hash) % iconGradients.length;
-  return iconGradients[index];
+  return ICON_GRADIENTS[Math.abs(hash) % ICON_GRADIENTS.length];
 }
 
-// Get icon letter based on domain
 function getIconLetter(url: string, title: string): string {
   try {
     const hostname = new URL(url).hostname;
@@ -47,7 +57,6 @@ function getIconLetter(url: string, title: string): string {
   return title.charAt(0).toUpperCase();
 }
 
-// Get subtle pattern based on ID
 function getIconPattern(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -58,80 +67,62 @@ function getIconPattern(id: string): string {
   return patterns[Math.abs(hash) % patterns.length];
 }
 
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch {
+    return url;
+  }
+}
+
 interface BookmarkCardProps {
   bookmark: Bookmark;
 }
 
-export type LangPref = 'auto' | 'zh' | 'en';
-
-// Language preference state
-let globalLangPref: LangPref = 'auto';
-
-function getEffectiveLang(): 'zh' | 'en' {
-  if (globalLangPref === 'auto') {
-    return typeof navigator !== 'undefined' && navigator.language.startsWith('zh') ? 'zh' : 'en';
-  }
-  return globalLangPref;
-}
-
-export function setLangPref(pref: LangPref) {
-  globalLangPref = pref;
-}
-
-export function getLangPref(): LangPref {
-  return globalLangPref;
-}
-
-export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [lang, setLang] = useState(getEffectiveLang());
+  const [lang, setLang] = useState<'zh' | 'en'>('zh');
   const [isHovered, setIsHovered] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const isEditMode = useAppStore((state) => state.isEditMode);
-  const isRevealMode = useAppStore((state) => state.isRevealMode);
-  const updateBookmark = useAppStore((state) => state.updateBookmark);
-  const deleteBookmark = useAppStore((state) => state.deleteBookmark);
+  const isEditMode = useAppStore((s) => s.isEditMode);
+  const isRevealMode = useAppStore((s) => s.isRevealMode);
+  const updateBookmark = useAppStore((s) => s.updateBookmark);
+  const deleteBookmark = useAppStore((s) => s.deleteBookmark);
 
   const iconStyle = getIconStyle(bookmark.id);
   const iconLetter = getIconLetter(bookmark.url, bookmark.title);
   const iconPattern = getIconPattern(bookmark.id);
-
-  // Get description
   const description = bookmark.description || getDescription(bookmark.url);
 
-  // Listen for language changes
+  // Subscribe to language changes from store (event-driven, no polling)
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newLang = getEffectiveLang();
-      if (newLang !== lang) {
-        setLang(newLang);
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, [lang]);
+    const unsubscribe = subscribeLang((newLang) => {
+      setLang(newLang);
+    });
+    return unsubscribe;
+  }, []);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (isEditMode) return;
     window.open(bookmark.url, '_blank');
     window.close();
-  };
+  }, [isEditMode, bookmark.url]);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
     if (!isEditMode && description) {
       setShowTooltip(true);
-      setLang(getEffectiveLang());
     }
-  };
+  }, [isEditMode, description]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
     setShowTooltip(false);
-  };
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (showTooltip && tooltipRef.current) {
       const rect = tooltipRef.current.getBoundingClientRect();
       let x = e.clientX - rect.width / 2;
@@ -148,16 +139,7 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
 
       setTooltipPos({ x, y });
     }
-  };
-
-  // Get domain for display
-  const getDomain = (url: string) => {
-    try {
-      return new URL(url).hostname.replace('www.', '');
-    } catch {
-      return url;
-    }
-  };
+  }, [showTooltip]);
 
   return (
     <div className="relative" onMouseMove={handleMouseMove}>
@@ -180,7 +162,6 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
 
         {/* Icon Container with Glow Effect */}
         <div className="relative mb-2">
-          {/* Glow Effect on Hover */}
           <div
             className={cn(
               'absolute inset-0 rounded-2xl blur-md opacity-0 transition-opacity duration-300 bg-gradient-to-br',
@@ -189,7 +170,6 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
             )}
           />
 
-          {/* Main Icon */}
           <div
             className={cn(
               'relative w-12 h-12 rounded-2xl flex items-center justify-center',
@@ -204,7 +184,6 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
                 : '0 2px 8px rgba(0,0,0,0.1)',
             }}
           >
-            {/* Subtle Pattern Overlay */}
             <span
               className="absolute inset-0 flex items-center justify-center text-white/10 text-2xl font-bold select-none pointer-events-none"
               aria-hidden="true"
@@ -212,12 +191,10 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
               {iconPattern}
             </span>
 
-            {/* Main Letter */}
             <span className="text-lg font-bold text-white relative z-10 drop-shadow-md">
               {iconLetter}
             </span>
 
-            {/* Region Indicator Dot */}
             <div
               className={cn(
                 'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white',
@@ -281,9 +258,7 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
       {isEditMode && (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 context-menu z-10 min-w-[120px]">
           <button
-            onClick={() => {
-              updateBookmark(bookmark.id, { hidden: !bookmark.hidden });
-            }}
+            onClick={() => updateBookmark(bookmark.id, { hidden: !bookmark.hidden })}
             className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-600"
           >
             <Lock className="w-4 h-4" />
@@ -303,3 +278,13 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
     </div>
   );
 }
+
+// Stable reference via memo
+const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
+  return prev.bookmark.id === next.bookmark.id &&
+    prev.bookmark.title === next.bookmark.title &&
+    prev.bookmark.url === next.bookmark.url &&
+    prev.bookmark.hidden === next.bookmark.hidden;
+});
+
+export default BookmarkCard;

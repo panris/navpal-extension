@@ -1,3 +1,4 @@
+import { useEffect, useRef, useCallback } from 'react';
 import { Search, Compass } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import SettingsMenu from './SettingsMenu';
@@ -13,6 +14,33 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMaximized 
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const isRevealMode = useAppStore((state) => state.isRevealMode);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced search
+  const handleSearchChange = useCallback((value: string) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setSearchQuery(value);
+    }, 200);
+  }, [setSearchQuery]);
+
+  // Expose search focus for keyboard shortcut
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      if ((e as any).detail?.focus === 'search') {
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('navpal:focus', handler);
+    return () => window.removeEventListener('navpal:focus', handler);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   return (
     <div className="app-header">
@@ -50,10 +78,11 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMaximized 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
         <input
+          ref={searchRef}
           type="text"
           placeholder="搜索书签..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          defaultValue={searchQuery}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 text-sm search-glass rounded-xl placeholder-white/60"
         />
       </div>

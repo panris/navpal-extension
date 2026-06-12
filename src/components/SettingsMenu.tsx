@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Settings, Globe, Minus, Square, Maximize2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { getLangPref, setLangPref } from './BookmarkCard';
+import { useAppStore } from '@/stores/appStore';
 import type { LangPref } from './BookmarkCard';
 
 interface SettingsMenuProps {
@@ -13,8 +13,10 @@ interface SettingsMenuProps {
 
 export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMaximized }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [langPref, setLangPrefState] = useState<LangPref>(getLangPref());
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const langPref = useAppStore((s) => s.langPref);
+  const setLangPref = useAppStore((s) => s.setLangPref);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -29,7 +31,6 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMaxi
 
   const handleLangChange = (pref: LangPref) => {
     setLangPref(pref);
-    setLangPrefState(pref);
   };
 
   const langOptions: { value: LangPref; label: string; icon: string }[] = [

@@ -1,50 +1,82 @@
-import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Plus, AlertCircle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { normalizeUrl, autoDetectRegion } from '@/utils';
+import { normalizeUrl, autoDetectRegion, isValidUrl } from '@/utils';
+import { ICON_GRADIENTS } from './BookmarkCard';
 
 // Color gradients for icons
-const iconGradients = [
-  'from-violet-500 to-purple-600',
-  'from-pink-500 to-rose-500',
-  'from-cyan-500 to-blue-500',
-  'from-emerald-500 to-teal-500',
-  'from-rose-400 to-amber-500',
-  'from-teal-300 to-pink-300',
-  'from-rose-400 to-pink-300',
-  'from-orange-300 to-peach-400',
-  'from-blue-400 to-cyan-300',
-  'from-purple-300 to-yellow-200',
-];
-
 function getGradientClass(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) - hash) + id.charCodeAt(i);
     hash = hash & hash;
   }
-  const index = Math.abs(hash) % iconGradients.length;
-  return `bg-gradient-to-br ${iconGradients[index]}`;
+  const index = Math.abs(hash) % ICON_GRADIENTS.length;
+  return `bg-gradient-to-br ${ICON_GRADIENTS[index].bg}`;
+}
+
+// Truncate long text for display
+function truncate(text: string, maxLen: number): string {
+  return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
+}
+
+// Validate URL with detailed feedback
+function validateUrl(url: string): { valid: boolean; message: string } {
+  if (!url.trim()) return { valid: false, message: '请输入网址' };
+  try {
+    const normalized = normalizeUrl(url.trim());
+    const parsed = new URL(normalized);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return { valid: false, message: '仅支持 http/https 链接' };
+    }
+    return { valid: true, message: '' };
+  } catch {
+    return { valid: false, message: '网址格式不正确' };
+  }
 }
 
 export default function EditModal() {
-  const isEditMode = useAppStore((state) => state.isEditMode);
-  const toggleEditMode = useAppStore((state) => state.toggleEditMode);
-  const addBookmark = useAppStore((state) => state.addBookmark);
-  const deleteBookmark = useAppStore((state) => state.deleteBookmark);
-  const updateBookmark = useAppStore((state) => state.updateBookmark);
-  const groups = useAppStore((state) => state.groups);
-  const bookmarks = useAppStore((state) => state.bookmarks);
+  const isEditMode = useAppStore((s) => s.isEditMode);
+  const toggleEditMode = useAppStore((s) => s.toggleEditMode);
+  const addBookmark = useAppStore((s) => s.addBookmark);
+  const deleteBookmark = useAppStore((s) => s.deleteBookmark);
+  const updateBookmark = useAppStore((s) => s.updateBookmark);
+  const groups = useAppStore((s) => s.groups);
+  const bookmarks = useAppStore((s) => s.bookmarks);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newUrl, setNewUrl] = useState('');
   const [selectedGroup, setSelectedGroup] = useState(groups[0]?.id || '');
+  const [urlError, setUrlError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const urlInputRef = useRef<HTMLInputElement>(null);
 
   if (!isEditMode) return null;
 
+  const handleUrlChange = (value: string) => {
+    setNewUrl(value);
+    if (value.trim()) {
+      const { valid, message } = validateUrl(value);
+      setUrlError(valid ? '' : message);
+    } else {
+      setUrlError('');
+    }
+  };
+
   const handleAddBookmark = () => {
-    if (!newTitle.trim() || !newUrl.trim()) return;
+    const { valid } = validateUrl(newUrl);
+    if (!valid) {
+      setUrlError(validateUrl(newUrl).message);
+      urlInputRef.current?.focus();
+      return;
+    }
+    if (!newTitle.trim()) {
+      return;
+    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const url = normalizeUrl(newUrl.trim());
     const region = autoDetectRegion(url);
@@ -60,12 +92,27 @@ export default function EditModal() {
 
     setNewTitle('');
     setNewUrl('');
+    setUrlError('');
     setShowAddForm(false);
+    setIsSubmitting(false);
+  };
+
+  const handleCloseForm = () => {
+    setShowAddForm(false);
+    setNewTitle('');
+    setNewUrl('');
+    setUrlError('');
   };
 
   return (
-    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50" onClick={toggleEditMode}>
-      <div className="modal-content w-[340px] max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 modal-overlay flex items-center justify-center z-50"
+      onClick={toggleEditMode}
+    >
+      <div
+        className="modal-content w-[340px] max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="modal-header-gradient px-6 py-5 text-white">
           <div className="flex items-center justify-between">
@@ -86,21 +133,41 @@ export default function EditModal() {
         <div className="flex-1 overflow-y-auto p-5">
           {/* Add Form */}
           {showAddForm ? (
-            <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
+            <div className="space-y-3 mb-6 pb-6 border-b border-gray-100">
               <input
                 type="text"
                 placeholder="书签标题"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+                maxLength={60}
               />
-              <input
-                type="text"
-                placeholder="网址 https://..."
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
-              />
+              <div className="relative">
+                <input
+                  ref={urlInputRef}
+                  type="text"
+                  placeholder="网址 https://..."
+                  value={newUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddBookmark();
+                  }}
+                  className={`w-full px-4 py-3 pr-10 text-sm border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                    urlError
+                      ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                      : 'border-gray-200 focus:border-violet-500 focus:ring-violet-100'
+                  }`}
+                />
+                {urlError && (
+                  <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                )}
+              </div>
+              {urlError && (
+                <p className="text-xs text-red-500 flex items-center gap-1 -mt-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {urlError}
+                </p>
+              )}
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
@@ -115,16 +182,13 @@ export default function EditModal() {
               <div className="flex gap-3">
                 <button
                   onClick={handleAddBookmark}
-                  className="btn-primary flex-1 py-3 rounded-xl text-sm font-semibold"
+                  disabled={isSubmitting || !!urlError || !newTitle.trim() || !newUrl.trim()}
+                  className="btn-primary flex-1 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  添加书签
+                  {isSubmitting ? '添加中…' : '添加书签'}
                 </button>
                 <button
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setNewTitle('');
-                    setNewUrl('');
-                  }}
+                  onClick={handleCloseForm}
                   className="px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                 >
                   取消
@@ -149,22 +213,24 @@ export default function EditModal() {
                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 {/* Icon */}
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm ${getGradientClass(bookmark.id)}`}>
-                  {bookmark.title.charAt(0)}
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0 ${getGradientClass(bookmark.id)}`}
+                >
+                  {truncate(bookmark.title, 1)}
                 </div>
 
-                {/* Info */}
+                {/* Info - truncate long text */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate">
-                    {bookmark.title}
+                  <div className="text-sm font-semibold text-gray-900 truncate" title={bookmark.title}>
+                    {truncate(bookmark.title, 20)}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {bookmark.url.replace('https://', '').replace('http://', '')}
+                  <div className="text-xs text-gray-500 truncate" title={bookmark.url}>
+                    {truncate(bookmark.url.replace('https://', '').replace('http://', ''), 30)}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => updateBookmark(bookmark.id, { hidden: !bookmark.hidden })}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 hover:bg-amber-100 transition-colors"
