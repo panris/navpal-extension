@@ -14,7 +14,7 @@ interface GroupEditState {
   emoji: string;
 }
 
-export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMaximized }: SettingsMenuProps) {
+export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<'main' | 'groups' | 'data'>('main');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -167,9 +167,17 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMaxi
               <div>
                 <p className="text-xs font-medium text-gray-400 uppercase mb-2">窗口控制</p>
                 <div className="flex gap-2">
-                  <button onClick={() => { onMinimize?.(); setIsOpen(false); }} className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">最小化</button>
-                  <button onClick={() => { isMaximized ? onRestore?.() : onMaximize?.(); setIsOpen(false); }} className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
-                    {isMaximized ? '恢复' : '最大化'}
+                  <button
+                    onClick={() => { isMinimized ? onMaximize?.() : onMinimize?.(); setIsOpen(false); }}
+                    className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    {isMinimized ? '展开' : '最小化'}
+                  </button>
+                  <button
+                    onClick={() => { onMaximize?.(); setIsOpen(false); }}
+                    className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    最大化
                   </button>
                 </div>
               </div>
@@ -352,6 +360,5 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMaxi
 interface SettingsMenuProps {
   onMinimize?: () => void;
   onMaximize?: () => void;
-  onRestore?: () => void;
-  isMaximized?: boolean;
+  isMinimized?: boolean;
 }

@@ -8,8 +8,6 @@ import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-type ViewMode = 'default' | 'minimized';
-
 function formatTime(): string {
   const now = new Date();
   const h = now.getHours().toString().padStart(2, '0');
@@ -17,10 +15,7 @@ function formatTime(): string {
   return `${h}:${m}`;
 }
 
-// Full-page 入口（manifest web_accessible_resources 配置）
-const FULLPAGE_URL = chrome.runtime.getURL('index.html');
-
-export default function App() {
+export default function AppFull() {
   const isRevealMode = useAppStore((s) => s.isRevealMode);
   const exitRevealMode = useAppStore((s) => s.exitRevealMode);
   const activeGroupId = useAppStore((s) => s.activeGroupId);
@@ -30,7 +25,6 @@ export default function App() {
   const groups = useVisibleGroups();
   const bookmarks = useVisibleBookmarks();
 
-  const [viewMode, setViewMode] = useState<ViewMode>('default');
   const [currentTime, setCurrentTime] = useState(formatTime);
 
   // Default active group
@@ -40,44 +34,19 @@ export default function App() {
     }
   }, [activeGroupId, groups, setActiveGroup]);
 
-  // Clock: tick every 30s
+  // Clock
   useEffect(() => {
     const tick = setInterval(() => setCurrentTime(formatTime()), 30000);
     return () => clearInterval(tick);
   }, []);
 
-  // Close popup → exit reveal mode
-  useEffect(() => {
-    const handler = () => {
-      if (isRevealMode) exitRevealMode();
-    };
-    document.addEventListener('visibilitychange', handler);
-    return () => document.removeEventListener('visibilitychange', handler);
-  }, [isRevealMode, exitRevealMode]);
-
-  const filteredBookmarks = activeGroupId
-    ? bookmarks.filter((b) => b.groupId === activeGroupId)
-    : bookmarks;
-
-  // ── Window controls ──────────────────────────────────────────
-  /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
-  const handleMinimize = () => setViewMode('minimized');
-
-  /** 恢复正常（从最小化展开） */
-  const handleRestore = () => setViewMode('default');
-
-  /** 最大化：打开完整页面，关闭当前 popup */
-  const handleMaximize = () => {
-    window.open(FULLPAGE_URL, '_blank');
-    window.close();
-  };
-
-  // ── Keyboard shortcuts ────────────────────────────────────────
+  // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement).tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     switch (e.key) {
       case '/':
+      case 'k':
         if (e.ctrlKey || e.key === '/') {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent('navpal:focus', { detail: { focus: 'search' } }));
@@ -100,11 +69,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  const filteredBookmarks = activeGroupId
+    ? bookmarks.filter((b) => b.groupId === activeGroupId)
+    : bookmarks;
+
   return (
-    <div
-      className="flex flex-col bg-gray-50 relative overflow-hidden transition-all duration-300"
-      style={{ height: viewMode === 'minimized' ? '64px' : '100vh' }}
-    >
+    <div className="flex flex-col bg-gray-50 relative overflow-hidden" style={{ minHeight: '100vh' }}>
       {/* Status Bar */}
       <div className="status-bar">
         <span className="font-semibold">{currentTime}</span>
@@ -124,54 +94,27 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── Minimized: compact bar only ─────────────────────────── */}
-      {viewMode === 'minimized' ? (
-        <div className="flex items-center justify-center flex-1 px-4 gap-3">
-          <div className="flex items-center gap-1.5 text-sm font-medium text-white/80">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-            <span>伴航 NavPal</span>
-          </div>
-          <button
-            onClick={handleRestore}
-            className="px-4 py-1.5 text-xs font-semibold text-violet-600 bg-white/90 rounded-full hover:bg-white transition-colors"
-          >
-            展开
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Header */}
-          <Header
-            onMinimize={handleMinimize}
-            onMaximize={handleMaximize}
-            isMinimized={viewMode === 'minimized'}
-          />
+      {/* Header — no window controls in full-page mode */}
+      <Header />
 
-          {/* Group Tabs */}
-          <ErrorBoundary>
-            <GroupTabs />
-          </ErrorBoundary>
+      {/* Group Tabs */}
+      <ErrorBoundary>
+        <GroupTabs />
+      </ErrorBoundary>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto p-4">
-            <ErrorBoundary>
-              <BookmarkGrid bookmarks={filteredBookmarks} />
-            </ErrorBoundary>
-          </main>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto p-4">
+        <ErrorBoundary>
+          <BookmarkGrid bookmarks={filteredBookmarks} />
+        </ErrorBoundary>
+      </main>
 
-          {/* Footer */}
-          <Footer />
-        </>
-      )}
+      {/* Footer */}
+      <Footer />
 
       {/* Modals */}
       <ErrorBoundary><EditModal /></ErrorBoundary>
       <ErrorBoundary><SecretModal /></ErrorBoundary>
-
-      {/* Home Indicator */}
-      {viewMode !== 'minimized' && <div className="home-indicator" />}
     </div>
   );
 }

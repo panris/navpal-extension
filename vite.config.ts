@@ -16,6 +16,7 @@ export default defineConfig({
       input: {
         background: './src/background/index.ts',
         popup: './src/popup/index.html',
+        fullpage: './index.html',
       },
       output: {
         entryFileNames: 'assets/[name].js',
