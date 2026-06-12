@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useAppStore, useVisibleGroups, useVisibleBookmarks } from '@/stores/appStore';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Globe } from 'lucide-react';
+import { useAppStore, useVisibleGroups, useVisibleBookmarks, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
 import BookmarkGrid from '@/components/BookmarkGrid';
@@ -7,12 +8,78 @@ import Footer from '@/components/Footer';
 import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { cn } from '@/utils/cn';
+import type { LangPref } from '@/components/BookmarkCard';
+
+const LANG_OPTIONS = [
+  { value: 'auto' as LangPref, label: '跟随系统', icon: '🔄' },
+  { value: 'zh' as LangPref, label: '中文', icon: '🇨🇳' },
+  { value: 'en' as LangPref, label: 'English', icon: '🇺🇸' },
+];
 
 function formatTime(): string {
   const now = new Date();
   const h = now.getHours().toString().padStart(2, '0');
   const m = now.getMinutes().toString().padStart(2, '0');
   return `${h}:${m}`;
+}
+
+function FullpageLangSwitch() {
+  const langPref = useAppStore((s) => s.langPref);
+  const setLangPref = useAppStore((s) => s.setLangPref);
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const currentOption = LANG_OPTIONS.find(o => o.value === langPref) || LANG_OPTIONS[0];
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-lg border border-white/20 transition-all"
+      >
+        <Globe className="w-3.5 h-3.5" />
+        <span>{currentOption.icon} {currentOption.label}</span>
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+          {LANG_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                setLangPref(opt.value);
+                setIsOpen(false);
+              }}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-all',
+                langPref === opt.value
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              <span>{opt.icon}</span>
+              <span className="font-medium">{opt.label}</span>
+              {langPref === opt.value && (
+                <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AppFull() {
@@ -26,6 +93,16 @@ export default function AppFull() {
   const bookmarks = useVisibleBookmarks();
 
   const [currentTime, setCurrentTime] = useState(formatTime);
+
+  // Initialize language from langPref on mount
+  useEffect(() => {
+    const langPref = useAppStore.getState().langPref;
+    const effectiveLang = getEffectiveLang(langPref);
+    // Import and call notifyLangChange to set up the event bus
+    import('@/stores/appStore').then(({ notifyLangChange }) => {
+      notifyLangChange(effectiveLang);
+    });
+  }, []);
 
   // Default active group
   useEffect(() => {
@@ -78,7 +155,8 @@ export default function AppFull() {
       {/* Status Bar */}
       <div className="status-bar">
         <span className="font-semibold">{currentTime}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <FullpageLangSwitch />
           <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" className="opacity-80">
             <path d="M8 2.4C10.5 2.4 12.5 3.6 13.5 5.4C14 4.4 14.5 3.2 14.5 2C14.5 0.9 13.9 0 13 0H3C2.1 0 1.5 0.9 1.5 2C1.5 3.2 2 4.4 2.5 5.4C3.5 3.6 5.5 2.4 8 2.4Z"/>
           </svg>

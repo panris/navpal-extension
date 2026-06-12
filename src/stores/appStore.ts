@@ -29,6 +29,8 @@ function notifyLangChange(lang: 'zh' | 'en') {
   langListeners.forEach((l) => l(lang));
 }
 
+export { notifyLangChange };
+
 export function getEffectiveLang(pref: LangPref): 'zh' | 'en' {
   if (pref === 'auto') {
     return typeof navigator !== 'undefined' && navigator.language.startsWith('zh') ? 'zh' : 'en';
