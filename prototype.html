@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=400, height=600">
+  <title>伴航 NavPal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --primary-light: #60a5fa;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-base: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-elevated: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 50%, #8b5cf6 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .device-frame {
+      width: 380px;
+      height: 580px;
+      background: #0f172a;
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow: 
+        0 0 0 1px rgba(255,255,255,0.1),
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 80px rgba(102, 126, 234, 0.3);
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-base);
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: 44px;
+      padding: 12px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .status-bar .time {
+      font-weight: 600;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    /* App Header */
+    .app-header {
+      padding: 16px 20px 12px;
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-logo {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .app-logo svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .app-subtitle {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .header-btn:hover {
+      background: rgba(255,255,255,0.25);
+      transform: scale(1.05);
+    }
+
+    .header-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Search */
+    .search-container {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+      color: white;
+      transition: all 0.2s;
+    }
+
+    .search-input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .search-input:focus {
+      outline: none;
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* Language Toggle */
+    .lang-toggle {
+      display: inline-flex;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 3px;
+      margin-top: 12px;
+    }
+
+    .lang-toggle button {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: rgba(255,255,255,0.7);
+      background: transparent;
+    }
+
+    .lang-toggle button:hover {
+      color: white;
+    }
+
+    .lang-toggle button.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Reveal Badge */
+    .reveal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      border-radius: 20px;
+      margin-left: 8px;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Category Tabs */
+    .category-section {
+      background: var(--bg-card);
+      padding: 16px 0 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .category-scroll {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .category-scroll::-webkit-scrollbar { display: none; }
+
+    .category-tab {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-base);
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .category-tab:hover {
+      color: var(--text-primary);
+      background: var(--border-light);
+    }
+
+    .category-tab.active {
+      background: var(--text-primary);
+      color: white;
+    }
+
+    .category-tab .icon {
+      font-size: 14px;
+    }
+
+    .category-tab .count {
+      font-size: 11px;
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.08);
+      border-radius: 10px;
+    }
+
+    .category-tab.active .count {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Main Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .quick-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .quick-btn.primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border: none;
+      color: white;
+    }
+
+    .quick-btn.primary:hover {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #1d4ed8 100%);
+    }
+
+    .quick-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Bookmark Grid */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title .view-all {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .bookmark-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .bookmark-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 8px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .bookmark-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-light);
+    }
+
+    .bookmark-card:active {
+      transform: translateY(-2px) scale(0.98);
+    }
+
+    .bookmark-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bookmark-icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: inherit;
+      filter: brightness(0.9);
+    }
+
+    .bookmark-icon span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .bookmark-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+
+    .bookmark-region {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    /* Hidden item style */
+    .bookmark-card.hidden {
+      opacity: 0.5;
+    }
+
+    .bookmark-card.hidden .bookmark-icon {
+      filter: grayscale(1);
+    }
+
+    .lock-indicator {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 18px;
+      height: 18px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bookmark-card.hidden .lock-indicator {
+      display: flex;
+    }
+
+    .lock-indicator svg {
+      width: 10px;
+      height: 10px;
+      color: white;
+    }
+
+    /* Footer */
+    .app-footer {
+      padding: 12px 16px 20px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .footer-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stats-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-item svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .stat-item.warning {
+      color: var(--warning);
+    }
+
+    .stat-item.primary {
+      color: var(--primary);
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 28px;
+      width: 320px;
+      overflow: hidden;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Secret Modal */
+    .modal-header {
+      padding: 24px 24px 16px;
+      text-align: center;
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .modal-header h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal-header p {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .pin-dot {
+      width: 56px;
+      height: 56px;
+      background: var(--bg-base);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .pin-dot.filled {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: var(--primary);
+    }
+
+    .pin-dot.error {
+      border-color: var(--danger);
+      background: #fef2f2;
+      color: var(--danger);
+      animation: shake 0.4s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .key {
+      padding: 18px;
+      font-size: 22px;
+      font-weight: 600;
+      background: var(--bg-base);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-primary);
+    }
+
+    .key:hover {
+      background: var(--border-light);
+    }
+
+    .key:active {
+      transform: scale(0.95);
+      background: var(--border);
+    }
+
+    .key.del {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .confirm-btn {
+      width: 100%;
+      padding: 16px;
+      margin-top: 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .confirm-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 14px;
+      margin-top: 16px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    /* Edit Modal */
+    .edit-modal .modal-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .add-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .add-form input,
+    .add-form select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .add-form input:focus,
+    .add-form select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .add-form-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .add-form-actions button {
+      flex: 1;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .add-btn {
+      background: var(--primary);
+      color: white;
+    }
+
+    .add-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .cancel-btn {
+      background: var(--bg-base);
+      color: var(--text-secondary);
+    }
+
+    .cancel-btn:hover {
+      background: var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .bookmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-base);
+      border-radius: var(--radius-md);
+    }
+
+    .bookmark-item .icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .bookmark-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bookmark-item .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bookmark-item .url {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bookmark-item .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .item-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+    }
+
+    .item-btn:hover {
+      background: var(--bg-card);
+    }
+
+    .item-btn.hide { color: var(--warning); }
+    .item-btn.delete { color: var(--danger); }
+
+    .item-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 14px 24px;
+      background: var(--text-primary);
+      color: white;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 200;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: fixed;
+      z-index: 1000;
+      padding: 16px;
+      background: var(--text-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-width: 260px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 2px;
+    }
+
+    .tooltip-url {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+
+    .tooltip-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 12px 0;
+    }
+
+    .tooltip-desc {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tooltip-desc-text {
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .tooltip-desc-text.en {
+      color: #cbd5e1;
+      background: rgba(255,255,255,0.05);
+      border-left: 3px solid var(--primary);
+    }
+
+    .tooltip-desc-text.zh {
+      color: white;
+      background: rgba(255,255,255,0.1);
+      border-left: 3px solid var(--success);
+    }
+
+    .tooltip-region {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.1);
+      color: #cbd5e1;
+    }
+
+    .tooltip-region.cn {
+      background: rgba(220, 38, 38, 0.2);
+      color: #fca5a5;
+    }
+
+    .tooltip-region.global {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+    }
+
+    .tooltip-arrow {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 16px;
+      background: var(--text-primary);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+    }
+
+    /* Context Menu */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 8px;
+      z-index: 150;
+      min-width: 180px;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.15s;
+    }
+
+    .context-menu.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .context-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .context-menu-item:hover {
+      background: var(--bg-base);
+    }
+
+    .context-menu-item.danger {
+      color: var(--danger);
+    }
+
+    .context-menu-item svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .context-menu-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 6px 0;
+    }
+
+    /* Home Indicator */
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="device-frame">
+    <div class="screen">
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+            <path d="M8 2.4C10.5 2.4 12.5 3.6 13.5 5.4C14 4.4 14.5 3.2 14.5 2C14.5 0.9 13.9 0 13 0H3C2.1 0 1.5 0.9 1.5 2C1.5 3.2 2 4.4 2.5 5.4C3.5 3.6 5.5 2.4 8 2.4Z"/>
+            <path d="M5.5 7.2C5.5 8.3 4.7 9.2 3.5 9.2C2.3 9.2 1.5 8.3 1.5 7.2V5.6C1.5 4.5 2.3 3.6 3.5 3.6C4.7 3.6 5.5 4.5 5.5 5.6V7.2Z" opacity="0.6"/>
+            <path d="M10.5 7.2C10.5 8.3 9.7 9.2 8.5 9.2C7.3 9.2 6.5 8.3 6.5 7.2V5.6C6.5 4.5 7.3 3.6 8.5 3.6C9.7 3.6 10.5 4.5 10.5 5.6V7.2Z" opacity="0.6"/>
+            <path d="M14.5 7.2C14.5 8.3 13.7 9.2 12.5 9.2C11.3 9.2 10.5 8.3 10.5 7.2V5.6C10.5 4.5 11.3 3.6 12.5 3.6C13.7 3.6 14.5 4.5 14.5 5.6V7.2Z" opacity="0.6"/>
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+            <rect x="0" y="4" width="2" height="8" rx="1"/>
+            <rect x="3.5" y="2" width="2" height="10" rx="1"/>
+            <rect x="7" y="0" width="2" height="12" rx="1"/>
+            <rect x="10.5" y="2" width="2" height="10" rx="1"/>
+            <rect x="14" y="4" width="2" height="8" rx="1"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- App Header -->
+      <div class="app-header">
+        <div class="header-top">
+          <div class="app-brand">
+            <div class="app-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" fill="currentColor"/>
+              </svg>
+            </div>
+            <div>
+              <div class="app-title">伴航</div>
+              <div class="app-subtitle">快捷导航工作台</div>
+            </div>
+            <span class="reveal-badge" id="revealBadge" style="display: none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              全量
+            </span>
+          </div>
+          <div class="header-actions">
+            <button class="header-btn" id="settingsBtn" title="设置">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="search-container">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" class="search-input" placeholder="搜索书签..." id="searchInput">
+        </div>
+        <div class="lang-toggle">
+          <button class="active" data-lang="auto">自动</button>
+          <button data-lang="zh">中文</button>
+          <button data-lang="en">EN</button>
+        </div>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="category-section">
+        <div class="category-scroll" id="categoryScroll">
+          <button class="category-tab active" data-group="all">
+            <span class="icon">✨</span>
+            <span>全部</span>
+            <span class="count" id="countAll">37</span>
+          </button>
+          <button class="category-tab" data-group="group-ai">
+            <span class="icon">🤖</span>
+            <span>AI</span>
+            <span class="count" id="countAI">8</span>
+          </button>
+          <button class="category-tab" data-group="group-dev">
+            <span class="icon">💻</span>
+            <span>开发</span>
+            <span class="count" id="countDev">8</span>
+          </button>
+          <button class="category-tab" data-group="group-design">
+            <span class="icon">🎨</span>
+            <span>设计</span>
+            <span class="count" id="countDesign">6</span>
+          </button>
+          <button class="category-tab" data-group="group-work">
+            <span class="icon">📋</span>
+            <span>工作</span>
+            <span class="count" id="countWork">7</span>
+          </button>
+          <button class="category-tab" data-group="group-entertainment">
+            <span class="icon">🎬</span>
+            <span>娱乐</span>
+            <span class="count" id="countEntertainment">8</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="quick-actions">
+          <button class="quick-btn" id="revealBtn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            全量模式
+          </button>
+          <button class="quick-btn primary" id="editBtn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            编辑
+          </button>
+        </div>
+
+        <div class="bookmark-grid" id="bookmarkGrid"></div>
+      </div>
+
+      <!-- Footer -->
+      <div class="app-footer">
+        <div class="footer-stats">
+          <div class="stats-left">
+            <span class="stat-item" id="bookmarkCount">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+              </svg>
+              37 个书签
+            </span>
+            <span class="stat-item warning" id="hiddenCount" style="display: none;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242"/>
+              </svg>
+              <span id="hiddenNum">3</span> 隐藏
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Home Indicator -->
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <!-- Secret Modal -->
+  <div class="modal-overlay" id="secretModal">
+    <div class="modal secret-modal">
+      <div class="modal-header">
+        <h3>暗号验证</h3>
+        <p>输入暗号解锁全量模式</p>
+      </div>
+      <div class="modal-body">
+        <div class="pin-display">
+          <div class="pin-dot" id="pin0"></div>
+          <div class="pin-dot" id="pin1"></div>
+          <div class="pin-dot" id="pin2"></div>
+        </div>
+        <div class="keypad">
+          <button class="key" data-key="1">1</button>
+          <button class="key" data-key="2">2</button>
+          <button class="key" data-key="3">3</button>
+          <button class="key" data-key="4">4</button>
+          <button class="key" data-key="5">5</button>
+          <button class="key" data-key="6">6</button>
+          <button class="key" data-key="7">7</button>
+          <button class="key" data-key="8">8</button>
+          <button class="key" data-key="9">9</button>
+          <button class="key"></button>
+          <button class="key" data-key="0">0</button>
+          <button class="key del" data-key="del">⌫</button>
+        </div>
+        <button class="confirm-btn" id="confirmPin">确认解锁</button>
+        <p class="error-msg" id="pinError" style="display: none;">暗号错误，请重试</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal edit-modal">
+      <div class="modal-header">
+        <h3>编辑书签</h3>
+        <p>添加、隐藏或删除书签</p>
+      </div>
+      <div class="modal-body">
+        <div class="add-form">
+          <input type="text" placeholder="书签标题" id="newTitle">
+          <input type="text" placeholder="网址 https://..." id="newUrl">
+          <select id="newGroup">
+            <option value="group-ai">🤖 AI 工具</option>
+            <option value="group-dev">💻 开发</option>
+            <option value="group-design">🎨 设计</option>
+            <option value="group-work">📋 工作</option>
+            <option value="group-entertainment">🎬 娱乐</option>
+          </select>
+          <div class="add-form-actions">
+            <button class="add-btn" id="addBookmark">添加书签</button>
+            <button class="cancel-btn" id="cancelAdd">清空</button>
+          </div>
+        </div>
+        <div class="bookmark-list" id="bookmarkList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" data-action="open">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+      </svg>
+      在新标签页打开
+    </div>
+    <div class="context-menu-item" data-action="toggle-hide">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242"/>
+      </svg>
+      <span class="context-hide-text">隐藏书签</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" data-action="delete">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+      删除书签
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Tooltip -->
+  <div class="tooltip" id="tooltip">
+    <div class="tooltip-title" id="tooltipTitle"></div>
+    <div class="tooltip-url" id="tooltipUrl"></div>
+    <div class="tooltip-divider"></div>
+    <div class="tooltip-desc">
+      <div class="tooltip-desc-text en" id="tooltipEn"></div>
+      <div class="tooltip-desc-text zh" id="tooltipZh"></div>
+    </div>
+    <div class="tooltip-region" id="tooltipRegion">
+      <span id="tooltipRegionIcon"></span>
+      <span id="tooltipRegionText"></span>
+    </div>
+    <div class="tooltip-arrow"></div>
+  </div>
+
+  <script>
+    // Color palette for icons
+    const iconColors = [
+      ['#667eea', '#764ba2'],
+      ['#f093fb', '#f5576c'],
+      ['#4facfe', '#00f2fe'],
+      ['#43e97b', '#38f9d7'],
+      ['#fa709a', '#fee140'],
+      ['#a8edea', '#fed6e3'],
+      ['#ff9a9e', '#fecfef'],
+      ['#ffecd2', '#fcb69f'],
+      ['#a1c4fd', '#c2e9fb'],
+      ['#d299c2', '#fef9d7'],
+    ];
+
+    function getGradient(id) {
+      const index = id % iconColors.length;
+      return `linear-gradient(135deg, ${iconColors[index][0]} 0%, ${iconColors[index][1]} 100%)`;
+    }
+
+    // Data
+    const bookmarks = [
+      { id: 1, title: 'ChatGPT', url: 'https://chat.openai.com', region: 'global', hidden: false, groupId: 'group-ai', desc: { en: 'AI chatbot by OpenAI. Conversational AI for writing, coding, analysis, and creative tasks.', zh: 'OpenAI开发的AI对话助手，可用于写作、编程、分析和创意任务。' }},
+      { id: 2, title: 'Claude', url: 'https://claude.ai', region: 'global', hidden: false, groupId: 'group-ai', desc: { en: 'AI assistant by Anthropic. Focuses on being helpful, harmless, and honest.', zh: 'Anthropic开发的AI助手，专注于有用、无害和诚实。' }},
+      { id: 3, title: 'Gemini', url: 'https://gemini.google.com', region: 'global', hidden: false, groupId: 'group-ai', desc: { en: 'Google\'s multimodal AI. Text, images, code, and more in one model.', zh: 'Google的多模态AI模型，融合文本、图像、代码等多种能力。' }},
+      { id: 4, title: '通义千问', url: 'https://tongyi.aliyun.com', region: 'cn', hidden: false, groupId: 'group-ai', desc: { en: 'Alibaba\'s LLM. Chinese-focused AI for business and daily use.', zh: '阿里云大语言模型，专注于中文场景的企业和日常应用。' }},
+      { id: 5, title: '文心一言', url: 'https://yiyan.baidu.com', region: 'cn', hidden: false, groupId: 'group-ai', desc: { en: 'Baidu\'s ERNIE Bot. China\'s answer to GPT with deep Chinese language understanding.', zh: '百度文心大模型，具备深度中文理解能力的国产大语言模型。' }},
+      { id: 6, title: 'Kimi', url: 'https://kimi.moonshot.cn', region: 'cn', hidden: false, groupId: 'group-ai', desc: { en: 'Moonshot AI\'s chatbot. Known for 200K context window and document analysis.', zh: '月之暗面Kimi，支持20万字超长上下文，擅长文档分析。' }},
+      { id: 7, title: 'DeepSeek', url: 'https://chat.deepseek.com', region: 'cn', hidden: false, groupId: 'group-ai', desc: { en: 'DeepSeek V2/3. Open-source reasoning model with excellent cost-performance.', zh: '深度求索开源推理模型，性价比出色的国产大模型。' }},
+      { id: 8, title: 'Cursor', url: 'https://cursor.com', region: 'global', hidden: false, groupId: 'group-ai', desc: { en: 'AI-first code editor. Built on VS Code with integrated AI coding assistant.', zh: 'AI优先的代码编辑器，基于VS Code集成AI编程助手。' }},
+      { id: 9, title: 'GitHub', url: 'https://github.com', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'Code hosting platform. Git repositories, pull requests, CI/CD, and social coding.', zh: '代码托管平台，提供Git仓库、PR、CI/CD和社交编程。' }},
+      { id: 10, title: 'GitLab', url: 'https://gitlab.com', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'DevOps platform. Complete CI/CD pipeline with integrated issue tracking.', zh: '一站式DevOps平台，提供完整CI/CD流水线和问题追踪。' }},
+      { id: 11, title: 'Stack Overflow', url: 'https://stackoverflow.com', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'Q&A for developers. The largest community for programming questions and answers.', zh: '开发者问答社区，全球最大的编程问答平台。' }},
+      { id: 12, title: 'MDN', url: 'https://developer.mozilla.org', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'Web docs by Mozilla. Complete reference for HTML, CSS, JS, and Web APIs.', zh: 'Mozilla官方Web文档，HTML/CSS/JS/Web API完整参考。' }},
+      { id: 13, title: 'npm', url: 'https://www.npmjs.com', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'Node package manager. The world\'s largest software registry for Node.js packages.', zh: 'Node.js包管理器，全球最大的Node.js软件注册表。' }},
+      { id: 14, title: 'Vercel', url: 'https://vercel.com', region: 'global', hidden: false, groupId: 'group-dev', desc: { en: 'Frontend cloud platform. Instant deployment for Next.js and static sites.', zh: '前端云平台，Next.js和静态站点的即时部署服务。' }},
+      { id: 15, title: 'Gitee', url: 'https://gitee.com', region: 'cn', hidden: false, groupId: 'group-dev', desc: { en: 'China\'s GitHub alternative. Popular in China for code hosting and collaboration.', zh: '中国版GitHub，国内开发者首选的代码托管和协作平台。' }},
+      { id: 16, title: '掘金', url: 'https://juejin.cn', region: 'cn', hidden: false, groupId: 'group-dev', desc: { en: 'Tech community by ByteDance. High-quality articles on programming and technology.', zh: '字节跳动技术社区，高质量编程和技术文章平台。' }},
+      { id: 17, title: 'Figma', url: 'https://figma.com', region: 'global', hidden: false, groupId: 'group-design', desc: { en: 'Collaborative design tool. Real-time UI/UX design, prototyping, and handoff.', zh: '协作文具工具，实时UI/UX设计、原型制作和设计交付。' }},
+      { id: 18, title: 'Miro', url: 'https://miro.com', region: 'global', hidden: false, groupId: 'group-design', desc: { en: 'Visual collaboration platform. Online whiteboards for brainstorming and planning.', zh: '可视化协作平台，用于头脑风暴和规划的在线白板。' }},
+      { id: 19, title: 'Excalidraw', url: 'https://excalidraw.com', region: 'global', hidden: false, groupId: 'group-design', desc: { en: 'Hand-drawn style diagrams. Collaborative whiteboard with sketchy aesthetic.', zh: '手绘风格图表工具，支持协作的Sketch风格白板。' }},
+      { id: 20, title: 'Unsplash', url: 'https://unsplash.com', region: 'global', hidden: false, groupId: 'group-design', desc: { en: 'Free high-res photos. Beautiful, royalty-free images for any project.', zh: '免费高清图片，美丽无版权图片用于任何项目。' }},
+      { id: 21, title: 'Google Fonts', url: 'https://fonts.google.com', region: 'global', hidden: false, groupId: 'group-design', desc: { en: 'Free web fonts library. Hundreds of open-source fonts for web use.', zh: '免费网页字体库，数百种开源网页字体。' }},
+      { id: 22, title: '稿定设计', url: 'https://www.gaoding.com', region: 'cn', hidden: false, groupId: 'group-design', desc: { en: 'Online design platform. Templates for social media, marketing, and presentations.', zh: '在线设计平台，提供社交媒体、营销和演示文稿模板。' }},
+      { id: 23, title: 'Notion', url: 'https://notion.so', region: 'global', hidden: false, groupId: 'group-work', desc: { en: 'All-in-one workspace. Notes, docs, wikis, and project management combined.', zh: '一体化工作空间，笔记、文档、知识库和项目管理合而为一。' }},
+      { id: 24, title: 'Linear', url: 'https://linear.app', region: 'global', hidden: false, groupId: 'group-work', desc: { en: 'Issue tracking for software teams. Fast, beautiful, and keyboard-driven.', zh: '软件团队的问题追踪工具，快速、漂亮、键盘驱动。' }},
+      { id: 25, title: 'Slack', url: 'https://slack.com', region: 'global', hidden: false, groupId: 'group-work', desc: { en: 'Team communication platform. Channels, DMs, integrations, and workflows.', zh: '团队协作平台，提供频道、私信、集成和工作流。' }},
+      { id: 26, title: '飞书', url: 'https://feishu.cn', region: 'cn', hidden: false, groupId: 'group-work', desc: { en: 'ByteDance\'s productivity suite. IM, docs, calendar, and video meetings.', zh: '字节跳动办公套件，即时通讯、文档、日历和视频会议。' }},
+      { id: 27, title: '钉钉', url: 'https://dingtalk.com', region: 'cn', hidden: false, groupId: 'group-work', desc: { en: 'Alibaba\'s enterprise app. Communication, OA, and management tools.', zh: '阿里企业级应用，提供沟通、OA和管理工具。' }},
+      { id: 28, title: '企业微信', url: 'https://work.weixin.qq.com', region: 'cn', hidden: false, groupId: 'group-work', desc: { en: 'WeChat for business. Corporate communication and customer management.', zh: '微信企业版，企业内部沟通和客户管理工具。' }},
+      { id: 29, title: '语雀', url: 'https://www.yuque.com', region: 'cn', hidden: false, groupId: 'group-work', desc: { en: 'Knowledge management platform. Beautiful docs and team wikis by Alibaba.', zh: '知识管理平台，阿里出品的美观文档和团队知识库。' }},
+      { id: 30, title: 'YouTube', url: 'https://youtube.com', region: 'global', hidden: false, groupId: 'group-entertainment', desc: { en: 'Video platform. Watch, create, and share videos with the world.', zh: '视频平台，与世界分享和观看视频。' }},
+      { id: 31, title: 'Twitter', url: 'https://twitter.com', region: 'global', hidden: false, groupId: 'group-entertainment', desc: { en: 'Social news platform. Real-time updates, trends, and microblogging.', zh: '社交新闻平台，实时动态、趋势和微博客。' }},
+      { id: 32, title: 'Reddit', url: 'https://reddit.com', region: 'global', hidden: false, groupId: 'group-entertainment', desc: { en: 'Community discussions. Forums organized by topics (subreddits) on everything.', zh: '社区讨论论坛，按主题（子版块）组织的全球社区。' }},
+      { id: 33, title: 'Bilibili', url: 'https://bilibili.com', region: 'cn', hidden: false, groupId: 'group-entertainment', desc: { en: 'Chinese video site. Anime, gaming, and creative content with danmu culture.', zh: '中国视频网站，动漫、游戏和创意内容，弹幕文化发源地。' }},
+      { id: 34, title: '微博', url: 'https://weibo.com', region: 'cn', hidden: false, groupId: 'group-entertainment', desc: { en: 'Chinese microblogging. Social media for news, entertainment, and trends.', zh: '中国微博客平台，社交媒体与新闻热点聚集地。' }},
+      { id: 35, title: '知乎', url: 'https://zhihu.com', region: 'cn', hidden: false, groupId: 'group-entertainment', desc: { en: 'Chinese Q&A platform. In-depth discussions on knowledge, opinions, and experiences.', zh: '中文问答社区，深入讨论知识、观点和经验。' }},
+      { id: 36, title: '小红书', url: 'https://xiaohongshu.com', region: 'cn', hidden: false, groupId: 'group-entertainment', desc: { en: 'Lifestyle platform. Shopping tips, travel guides, and user-generated content.', zh: '生活方式分享平台，购物攻略、旅行指南和UGC内容。' }},
+      { id: 37, title: 'Spotify', url: 'https://spotify.com', region: 'global', hidden: false, groupId: 'group-entertainment', desc: { en: 'Music streaming service. Millions of songs, podcasts, and personalized playlists.', zh: '音乐流媒体服务，数百万首歌曲、播客和个性化播放列表。' }},
+      { id: 38, title: '银行', url: 'https://icbc.com.cn', region: 'cn', hidden: true, groupId: 'group-work', desc: { en: 'Industrial and Commercial Bank of China. Largest state-owned commercial bank.', zh: '中国工商银行，国内最大的国有商业银行。' }},
+      { id: 39, title: '证券', url: 'https://eastmoney.com', region: 'cn', hidden: true, groupId: 'group-work', desc: { en: 'East Money Securities. Financial information and stock trading platform.', zh: '东方财富证券，金融信息和股票交易平台。' }},
+      { id: 40, title: '内部系统', url: 'https://internal.company.com', region: 'cn', hidden: true, groupId: 'group-dev', desc: { en: 'Internal company system. Confidential access only.', zh: '公司内部系统，仅限内部员工访问。' }},
+    ];
+
+    // State
+    let currentGroup = 'all';
+    let isRevealMode = false;
+    let isEditMode = false;
+    let pin = '';
+    let langPref = 'auto';
+    let contextMenuTarget = null;
+    const SECRET_CODE = '000';
+
+    // DOM Elements
+    const bookmarkGrid = document.getElementById('bookmarkGrid');
+    const searchInput = document.getElementById('searchInput');
+    const secretModal = document.getElementById('secretModal');
+    const editModal = document.getElementById('editModal');
+    const revealBtn = document.getElementById('revealBtn');
+    const editBtn = document.getElementById('editBtn');
+    const toast = document.getElementById('toast');
+    const revealBadge = document.getElementById('revealBadge');
+    const hiddenCount = document.getElementById('hiddenCount');
+    const bookmarkCount = document.getElementById('bookmarkCount');
+    const tooltip = document.getElementById('tooltip');
+    const contextMenu = document.getElementById('contextMenu');
+    const bookmarkList = document.getElementById('bookmarkList');
+
+    // Detect system language
+    const isSystemZh = navigator.language.startsWith('zh');
+
+    function getEffectiveLang() {
+      if (langPref === 'auto') return isSystemZh;
+      return langPref === 'zh';
+    }
+
+    // Language toggle
+    document.querySelectorAll('.lang-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        langPref = btn.dataset.lang;
+        document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render();
+      });
+    });
+
+    // Update category counts
+    function updateCategoryCounts() {
+      document.getElementById('countAll').textContent = bookmarks.filter(b => !b.hidden).length;
+      document.getElementById('countAI').textContent = bookmarks.filter(b => b.groupId === 'group-ai' && !b.hidden).length;
+      document.getElementById('countDev').textContent = bookmarks.filter(b => b.groupId === 'group-dev' && !b.hidden).length;
+      document.getElementById('countDesign').textContent = bookmarks.filter(b => b.groupId === 'group-design' && !b.hidden).length;
+      document.getElementById('countWork').textContent = bookmarks.filter(b => b.groupId === 'group-work' && !b.hidden).length;
+      document.getElementById('countEntertainment').textContent = bookmarks.filter(b => b.groupId === 'group-entertainment' && !b.hidden).length;
+    }
+
+    // Category switching
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentGroup = tab.dataset.group;
+        render();
+      });
+    });
+
+    // Render bookmarks
+    function render() {
+      let filtered = bookmarks;
+
+      if (currentGroup !== 'all') {
+        filtered = filtered.filter(b => b.groupId === currentGroup);
+      }
+
+      const query = searchInput.value.toLowerCase();
+      if (query) {
+        filtered = filtered.filter(b =>
+          b.title.toLowerCase().includes(query) ||
+          b.url.toLowerCase().includes(query)
+        );
+      }
+
+      if (!isRevealMode) {
+        filtered = filtered.filter(b => !b.hidden);
+      }
+
+      bookmarkGrid.innerHTML = filtered.map(b => `
+        <div class="bookmark-card ${b.hidden ? 'hidden' : ''}" data-id="${b.id}">
+          <div class="lock-indicator">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <div class="bookmark-icon" style="background: ${getGradient(b.id)}">
+            <span>${b.title.charAt(0)}</span>
+          </div>
+          <div class="bookmark-title">${b.title}</div>
+          <div class="bookmark-region">${b.region === 'cn' ? '🇨🇳' : '🌍'}</div>
+        </div>
+      `).join('');
+
+      // Event listeners
+      bookmarkGrid.querySelectorAll('.bookmark-card').forEach(card => {
+        card.addEventListener('mouseenter', showTooltip);
+        card.addEventListener('mousemove', moveTooltip);
+        card.addEventListener('mouseleave', hideTooltip);
+        card.addEventListener('contextmenu', showContextMenu);
+        card.addEventListener('click', handleCardClick);
+      });
+
+      // Update stats
+      const visibleCount = bookmarks.filter(b => !b.hidden).length;
+      const hiddenItemsCount = bookmarks.filter(b => b.hidden).length;
+      bookmarkCount.innerHTML = `
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+        </svg>
+        ${visibleCount} 个书签
+      `;
+
+      if (!isRevealMode && hiddenItemsCount > 0) {
+        hiddenCount.style.display = 'flex';
+        document.getElementById('hiddenNum').textContent = hiddenItemsCount;
+      } else {
+        hiddenCount.style.display = 'none';
+      }
+
+      revealBadge.style.display = isRevealMode ? 'inline-flex' : 'none';
+      updateCategoryCounts();
+    }
+
+    function handleCardClick(e) {
+      if (e.button === 0 && !isEditMode) {
+        const card = e.currentTarget;
+        const id = parseInt(card.dataset.id);
+        const bookmark = bookmarks.find(b => b.id === id);
+        if (bookmark) {
+          window.open(bookmark.url, '_blank');
+        }
+      }
+    }
+
+    // Context Menu
+    function showContextMenu(e) {
+      e.preventDefault();
+      const card = e.currentTarget;
+      const id = parseInt(card.dataset.id);
+      contextMenuTarget = bookmarks.find(b => b.id === id);
+
+      const hideText = contextMenu.querySelector('.context-hide-text');
+      hideText.textContent = contextMenuTarget.hidden ? '显示书签' : '隐藏书签';
+
+      contextMenu.style.left = e.clientX + 'px';
+      contextMenu.style.top = e.clientY + 'px';
+      contextMenu.classList.add('show');
+
+      const rect = contextMenu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) {
+        contextMenu.style.left = (e.clientX - rect.width) + 'px';
+      }
+      if (rect.bottom > window.innerHeight) {
+        contextMenu.style.top = (e.clientY - rect.height) + 'px';
+      }
+    }
+
+    function hideContextMenu() {
+      contextMenu.classList.remove('show');
+      contextMenuTarget = null;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        hideContextMenu();
+      }
+    });
+
+    contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.dataset.action;
+        if (!contextMenuTarget) return;
+
+        if (action === 'open') {
+          window.open(contextMenuTarget.url, '_blank');
+        } else if (action === 'toggle-hide') {
+          const bookmark = bookmarks.find(b => b.id === contextMenuTarget.id);
+          if (bookmark) {
+            bookmark.hidden = !bookmark.hidden;
+            showToast(bookmark.hidden ? '已隐藏' : '已显示');
+            render();
+          }
+        } else if (action === 'delete') {
+          const index = bookmarks.findIndex(b => b.id === contextMenuTarget.id);
+          if (index > -1) {
+            bookmarks.splice(index, 1);
+            showToast('已删除');
+            render();
+          }
+        }
+        hideContextMenu();
+      });
+    });
+
+    // Search
+    searchInput.addEventListener('input', render);
+
+    // Open secret modal
+    revealBtn.addEventListener('click', () => {
+      secretModal.classList.add('show');
+      pin = '';
+      updatePinDisplay();
+    });
+
+    // Keypad
+    document.querySelectorAll('.key').forEach(key => {
+      key.addEventListener('click', () => {
+        const k = key.dataset.key;
+        if (k === 'del') {
+          pin = pin.slice(0, -1);
+        } else if (k && pin.length < 3) {
+          pin += k;
+        }
+        updatePinDisplay();
+      });
+    });
+
+    function updatePinDisplay() {
+      for (let i = 0; i < 3; i++) {
+        const dot = document.getElementById(`pin${i}`);
+        dot.textContent = pin.length > i ? '●' : '';
+        dot.classList.remove('filled', 'error');
+        if (pin.length > i) {
+          dot.classList.add('filled');
+        }
+      }
+      document.getElementById('pinError').style.display = 'none';
+    }
+
+    // Confirm PIN
+    document.getElementById('confirmPin').addEventListener('click', () => {
+      if (pin === SECRET_CODE) {
+        isRevealMode = true;
+        secretModal.classList.remove('show');
+        pin = '';
+        render();
+        showToast('全量模式已开启');
+      } else {
+        document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
+        document.getElementById('pinError').style.display = 'block';
+        setTimeout(() => {
+          pin = '';
+          updatePinDisplay();
+        }, 500);
+      }
+    });
+
+    // Edit mode
+    editBtn.addEventListener('click', () => {
+      isEditMode = !isEditMode;
+      editBtn.classList.toggle('primary', !isEditMode);
+      if (isEditMode) {
+        renderBookmarkList();
+        editModal.classList.add('show');
+      }
+    });
+
+    document.getElementById('cancelAdd').addEventListener('click', () => {
+      document.getElementById('newTitle').value = '';
+      document.getElementById('newUrl').value = '';
+    });
+
+    // Close edit modal
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) {
+        isEditMode = false;
+        editBtn.classList.add('primary');
+        editModal.classList.remove('show');
+      }
+    });
+
+    // Render bookmark list
+    function renderBookmarkList() {
+      bookmarkList.innerHTML = bookmarks.map(b => `
+        <div class="bookmark-item" data-id="${b.id}">
+          <div class="icon" style="background: ${getGradient(b.id)}">${b.title.charAt(0)}</div>
+          <div class="info">
+            <div class="title">${b.title}</div>
+            <div class="url">${b.url.replace('https://', '')}</div>
+          </div>
+          <div class="actions">
+            <button class="item-btn hide" data-action="toggle-hide" title="${b.hidden ? '显示' : '隐藏'}">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242"/>
+              </svg>
+            </button>
+            <button class="item-btn delete" data-action="delete" title="删除">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      bookmarkList.querySelectorAll('.item-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const item = btn.closest('.bookmark-item');
+          const id = parseInt(item.dataset.id);
+          const action = btn.dataset.action;
+
+          if (action === 'toggle-hide') {
+            const bookmark = bookmarks.find(b => b.id === id);
+            if (bookmark) {
+              bookmark.hidden = !bookmark.hidden;
+              renderBookmarkList();
+              render();
+              showToast(bookmark.hidden ? '已隐藏' : '已显示');
+            }
+          } else if (action === 'delete') {
+            const index = bookmarks.findIndex(b => b.id === id);
+            if (index > -1) {
+              bookmarks.splice(index, 1);
+              renderBookmarkList();
+              render();
+              showToast('已删除');
+            }
+          }
+        });
+      });
+    }
+
+    // Add bookmark
+    document.getElementById('addBookmark').addEventListener('click', () => {
+      const title = document.getElementById('newTitle').value.trim();
+      const url = document.getElementById('newUrl').value.trim();
+      const group = document.getElementById('newGroup').value;
+
+      if (!title || !url) {
+        showToast('请填写标题和网址');
+        return;
+      }
+
+      const newId = Math.max(...bookmarks.map(b => b.id)) + 1;
+      const normalizedUrl = url.startsWith('http') ? url : 'https://' + url;
+      bookmarks.push({
+        id: newId,
+        title,
+        url: normalizedUrl,
+        region: url.includes('.cn') ? 'cn' : 'global',
+        hidden: false,
+        groupId: group,
+        desc: { en: '', zh: '' }
+      });
+
+      document.getElementById('newTitle').value = '';
+      document.getElementById('newUrl').value = '';
+      renderBookmarkList();
+      render();
+      showToast('书签添加成功');
+    });
+
+    // Toast
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // Tooltip
+    function showTooltip(e) {
+      const card = e.currentTarget;
+      const id = parseInt(card.dataset.id);
+      const bookmark = bookmarks.find(b => b.id === id);
+      if (!bookmark || !bookmark.desc) return;
+
+      document.getElementById('tooltipTitle').textContent = bookmark.title;
+      document.getElementById('tooltipUrl').textContent = bookmark.url.replace('https://', '');
+
+      const effectiveLang = getEffectiveLang();
+      const tooltipEn = document.getElementById('tooltipEn');
+      const tooltipZh = document.getElementById('tooltipZh');
+
+      tooltipEn.textContent = bookmark.desc.en;
+      tooltipZh.textContent = bookmark.desc.zh;
+
+      if (effectiveLang) {
+        tooltipEn.style.display = 'block';
+        tooltipZh.style.display = 'block';
+      } else {
+        tooltipEn.style.display = 'block';
+        tooltipZh.style.display = 'none';
+      }
+
+      const tooltipRegion = document.getElementById('tooltipRegion');
+      if (bookmark.region === 'cn') {
+        tooltipRegion.className = 'tooltip-region cn';
+        document.getElementById('tooltipRegionIcon').textContent = '🇨🇳';
+        document.getElementById('tooltipRegionText').textContent = '中国服务';
+      } else {
+        tooltipRegion.className = 'tooltip-region global';
+        document.getElementById('tooltipRegionIcon').textContent = '🌍';
+        document.getElementById('tooltipRegionText').textContent = '全球服务';
+      }
+
+      tooltip.classList.add('show');
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      const tooltipRect = tooltip.getBoundingClientRect();
+      let left = e.clientX - tooltipRect.width / 2;
+      let top = e.clientY - tooltipRect.height - 15;
+
+      const padding = 10;
+      if (left < padding) left = padding;
+      if (left + tooltipRect.width > window.innerWidth - padding) {
+        left = window.innerWidth - tooltipRect.width - padding;
+      }
+      if (top < padding) {
+        top = e.clientY + 25;
+      }
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove('show');
+    }
+
+    // Initialize
+    updateCategoryCounts();
+    render();
+  </script>
+</body>
+</html>
