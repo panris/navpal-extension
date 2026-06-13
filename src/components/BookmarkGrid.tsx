@@ -427,38 +427,10 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex gap-2 mb-4">
-        {/* Reveal Mode Button */}
-        <button
-          onClick={handleRevealRequest}
-          className="quick-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl"
-          style={{ flex: '0 0 auto' }}
-        >
-          <Eye className="w-4 h-4 text-gray-700" />
-          <span className="text-sm font-semibold text-gray-700">{getText('revealModeBtn', lang)}</span>
-        </button>
-
-        {/* Edit Mode Button */}
-        <button
-          onClick={isInGroupEdit || isInGlobalEdit ? handleExitEditMode : canEnterGroupEdit ? handleEnterGroupEdit : handleEnterGlobalEdit}
-          className={`quick-btn flex items-center justify-center gap-2 py-3 px-4 rounded-xl ${
-            isInGroupEdit || isInGlobalEdit ? 'primary' : ''
-          }`}
-          style={{ flex: '1 1 auto' }}
-        >
-          {isInGroupEdit || isInGlobalEdit ? (
-            <>
-              <span className="text-sm font-semibold">{getText('done', lang)}</span>
-            </>
-          ) : (
-            <>
-              <Edit3 className="w-4 h-4 text-gray-700" />
-              <span className="text-sm font-semibold text-gray-700">{getText('globalEditMode', lang)}</span>
-            </>
-          )}
-        </button>
-      </div>
+      {/* Quick Actions - Hidden for release */}
+      {/* <div className="flex gap-2 mb-4">
+        ...revealAll & globalEdit buttons...
+      </div> */}
 
       {/* Edit Mode Indicator */}
       {editMode !== 'none' && (

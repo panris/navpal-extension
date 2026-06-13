@@ -112,6 +112,12 @@ export interface AppState {
   deleteBookmarkGlobally: (id: string) => void;  // 全局软删除
   restoreBookmark: (id: string) => void;  // 恢复删除
 
+  // 记录访问时间（最近使用排序用）
+  recordAccess: (id: string) => void;
+
+  // 打开书签（记录访问 + 跳转）
+  openBookmark: (id: string) => void;
+
   // 设置操作
   updateSettings: (updates: Partial<AppSettings>) => void;
 }
