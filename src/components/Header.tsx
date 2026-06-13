@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Search, Compass } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import SettingsMenu from './SettingsMenu';
+import { useCurrentLang, getText } from '@/utils/i18n';
 
 interface HeaderProps {
   onMinimize?: () => void;
@@ -13,6 +14,7 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const isRevealMode = useAppStore((state) => state.isRevealMode);
+  const lang = useCurrentLang();
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,8 +52,8 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
             <Compass className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="text-base font-bold tracking-tight">伴航</div>
-            <div className="text-[10px] opacity-80">快捷导航工作台</div>
+            <div className="text-base font-bold tracking-tight">{getText('appName', lang)}</div>
+            <div className="text-[10px] opacity-80">{getText('appTagline', lang)}</div>
           </div>
           {isRevealMode && (
             <span className="reveal-badge inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full ml-1">
@@ -59,7 +61,7 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              全量
+              {getText('revealMode', lang)}
             </span>
           )}
         </div>
@@ -78,7 +80,7 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
         <input
           ref={searchRef}
           type="text"
-          placeholder="搜索书签..."
+          placeholder={getText('searchPlaceholder', lang)}
           defaultValue={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 text-sm search-glass rounded-xl placeholder-white/60"

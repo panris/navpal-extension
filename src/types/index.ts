@@ -20,9 +20,16 @@ export interface Bookmark {
   };
 }
 
+// 分组名称支持中英文
+export interface GroupName {
+  zh: string;
+  en: string;
+}
+
 export interface Group {
   id: string;
-  name: string;
+  name: string;           // 兼容旧数据，直接使用字符串时视为中文
+  nameI18n?: GroupName;  // 新格式的中英文名称
   icon?: string;
   color?: string;
   hidden: boolean;                  // 整个分组隐藏

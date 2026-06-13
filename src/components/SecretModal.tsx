@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { MAX_PIN_ATTEMPTS } from '@/constants';
+import { useCurrentLang, getText } from '@/utils/i18n';
 
 const STORAGE_KEY = 'navpal-reveal-fails';
 
@@ -36,6 +37,7 @@ export default function SecretModal() {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
   const [attempts, setAttempts] = useState(getFailedAttempts());
+  const lang = useCurrentLang();
 
   const settings = useAppStore((s) => s.settings);
   const revealMode = useAppStore((s) => s.revealMode);
@@ -82,6 +84,19 @@ export default function SecretModal() {
 
   if (!isOpen) return null;
 
+  // I18n text
+  const isZh = lang === 'zh';
+  const titleText = getText('enterSecret', lang);
+  const hintText = isZh ? '输入暗号解锁全量模式' : 'Enter code to unlock all mode';
+  const lockWarningText = isZh
+    ? `还剩 ${remaining} 次机会，失败将锁定1分钟`
+    : `${remaining} attempts left, locked for 1 min after failure`;
+  const lockedText = isZh ? '已锁定，请稍后再试' : 'Locked, please try again later';
+  const submitText = isZh ? '确认解锁' : 'Confirm';
+  const errorText = remaining <= 0
+    ? lockedText
+    : (isZh ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`);
+
   return (
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>
       <div className="modal-content w-[300px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -90,8 +105,8 @@ export default function SecretModal() {
           <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-3">
             {remaining <= 1 ? <AlertTriangle className="w-6 h-6" /> : <Shield className="w-6 h-6" />}
           </div>
-          <h2 className="text-xl font-bold mb-1">暗号验证</h2>
-          <p className="text-sm opacity-80">输入暗号解锁全量模式</p>
+          <h2 className="text-xl font-bold mb-1">{titleText}</h2>
+          <p className="text-sm opacity-80">{hintText}</p>
         </div>
 
         {/* Body */}
@@ -101,14 +116,14 @@ export default function SecretModal() {
             <div className="flex items-center gap-2 justify-center mb-4 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
               <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
               <p className="text-xs text-amber-700 font-medium">
-                还剩 <strong>{remaining}</strong> 次机会，失败将锁定1分钟
+                {lockWarningText}
               </p>
             </div>
           )}
           {remaining <= 0 && (
             <div className="flex items-center gap-2 justify-center mb-4 px-3 py-2 bg-red-50 rounded-lg border border-red-200">
               <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-xs text-red-700 font-medium">已锁定，请稍后再试</p>
+              <p className="text-xs text-red-700 font-medium">{lockedText}</p>
             </div>
           )}
 
@@ -155,13 +170,13 @@ export default function SecretModal() {
             disabled={remaining <= 0 || pin.length < 3}
             className="btn-primary w-full py-4 rounded-xl text-base font-semibold mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            确认解锁
+            {submitText}
           </button>
 
           {/* Error Message */}
           {error && (
             <p className="text-center text-sm text-red-500 font-medium mt-4">
-              {remaining <= 0 ? '已锁定，请稍后再试' : `暗号错误，还剩 ${remaining} 次机会`}
+              {errorText}
             </p>
           )}
         </div>

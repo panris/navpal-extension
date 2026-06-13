@@ -9,13 +9,8 @@ import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { cn } from '@/utils/cn';
+import { useCurrentLang, getText, LANG_OPTIONS } from '@/utils/i18n';
 import type { LangPref } from '@/components/BookmarkCard';
-
-const LANG_OPTIONS = [
-  { value: 'auto' as LangPref, label: '跟随系统', icon: '🔄' },
-  { value: 'zh' as LangPref, label: '中文', icon: '🇨🇳' },
-  { value: 'en' as LangPref, label: 'English', icon: '🇺🇸' },
-];
 
 function formatTime(): string {
   const now = new Date();
@@ -29,6 +24,7 @@ function FullpageLangSwitch() {
   const setLangPref = useAppStore((s) => s.setLangPref);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const lang = useCurrentLang();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -41,6 +37,7 @@ function FullpageLangSwitch() {
   }, []);
 
   const currentOption = LANG_OPTIONS.find(o => o.value === langPref) || LANG_OPTIONS[0];
+  const currentLabel = lang === 'en' ? currentOption.label.en : currentOption.label.zh;
 
   return (
     <div className="relative" ref={menuRef}>
@@ -49,33 +46,36 @@ function FullpageLangSwitch() {
         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-lg border border-white/20 transition-all"
       >
         <Globe className="w-3.5 h-3.5" />
-        <span>{currentOption.icon} {currentOption.label}</span>
+        <span>{currentOption.icon} {currentLabel}</span>
       </button>
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          {LANG_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                setLangPref(opt.value);
-                setIsOpen(false);
-              }}
-              className={cn(
-                'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-all',
-                langPref === opt.value
-                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              <span>{opt.icon}</span>
-              <span className="font-medium">{opt.label}</span>
-              {langPref === opt.value && (
-                <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
-          ))}
+          {LANG_OPTIONS.map((opt) => {
+            const optLabel = lang === 'en' ? opt.label.en : opt.label.zh;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setLangPref(opt.value);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-all',
+                  langPref === opt.value
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                )}
+              >
+                <span>{opt.icon}</span>
+                <span className="font-medium">{optLabel}</span>
+                {langPref === opt.value && (
+                  <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

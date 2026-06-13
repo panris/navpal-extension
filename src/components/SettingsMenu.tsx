@@ -3,6 +3,7 @@ import { Settings, Globe, Minus, Square, Maximize2, Plus, Trash2, Edit3, Upload,
 import { cn } from '@/utils/cn';
 import { useAppStore } from '@/stores/appStore';
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
+import { useCurrentLang, getText, LANG_OPTIONS, getLangOptionLabel } from '@/utils/i18n';
 import type { LangPref } from './BookmarkCard';
 
 interface SettingsMenuProps {
@@ -25,6 +26,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
   const [tab, setTab] = useState<'main' | 'groups' | 'data'>('main');
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lang = useCurrentLang();
 
   const langPref = useAppStore((s) => s.langPref);
   const setLangPref = useAppStore((s) => s.setLangPref);
@@ -75,7 +77,10 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
 
   const handleDeleteGroup = (id: string) => {
     const count = bookmarks.filter((b) => b.groupId === id).length;
-    if (count > 0 && !confirm(`分组下有 ${count} 个书签，确定删除？`)) return;
+    const msg = lang === 'zh'
+      ? `分组下有 ${count} 个书签，确定删除？`
+      : `This group has ${count} bookmarks. Delete anyway?`;
+    if (count > 0 && !confirm(msg)) return;
     deleteGroup(id);
     setGroupEdit(null);
   };
@@ -92,7 +97,8 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
       const raw = await readJsonFile(file);
       const { valid, data, error } = validateImportData(raw);
       if (!valid) {
-        setImportMsg(`导入失败: ${error}`);
+        const msg = lang === 'zh' ? `导入失败: ${error}` : `Import failed: ${error}`;
+        setImportMsg(msg);
         setTimeout(() => setImportMsg(''), 3000);
         return;
       }
@@ -103,13 +109,14 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
       data!.groups.forEach((g) => {
         if (!existingIds.has(g.id)) addGroup(g.name, g.icon);
       });
-      setImportMsg('导入成功！');
+      setImportMsg(getText('importSuccess', lang));
       setTimeout(() => setImportMsg(''), 3000);
     } catch (e) {
-      setImportMsg('导入失败，请检查文件格式');
+      const msg = lang === 'zh' ? '导入失败，请检查文件格式' : 'Import failed, please check file format';
+      setImportMsg(msg);
       setTimeout(() => setImportMsg(''), 3000);
     }
-  }, [groups, addGroup, updateSettings]);
+  }, [groups, addGroup, updateSettings, lang]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,6 +130,13 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
     return (new Blob([JSON.stringify(data)]).size / 1024).toFixed(1);
   })();
   const storagePercent = ((parseFloat(storageKB) / 100) * 100).toFixed(0);
+
+  // Tab labels
+  const tabLabels: Record<'main' | 'groups' | 'data', string> = {
+    main: getText('window', lang),
+    groups: getText('groups', lang),
+    data: getText('data', lang),
+  };
 
   return (
     <div className="relative" ref={menuRef}>
@@ -154,7 +168,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                       : 'text-gray-500 hover:bg-gray-200'
                   )}
                 >
-                  {t === 'main' ? '窗口' : t === 'groups' ? '分组' : '数据'}
+                  {tabLabels[t]}
                 </button>
               ))}
             </div>
@@ -171,32 +185,28 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
             <div className="p-4 space-y-5">
               {/* Window Controls */}
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase mb-2">窗口控制</p>
+                <p className="text-xs font-medium text-gray-400 uppercase mb-2">{getText('windowControls', lang)}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { isMinimized ? onMaximize?.() : onMinimize?.(); setIsOpen(false); }}
                     className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                   >
-                    {isMinimized ? '展开' : '最小化'}
+                    {isMinimized ? getText('expand', lang) : getText('minimize', lang)}
                   </button>
                   <button
                     onClick={() => { onMaximize?.(); setIsOpen(false); }}
                     className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                   >
-                    最大化
+                    {getText('maximize', lang)}
                   </button>
                 </div>
               </div>
 
               {/* Language */}
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase mb-2">界面语言</p>
+                <p className="text-xs font-medium text-gray-400 uppercase mb-2">{getText('interfaceLanguage', lang)}</p>
                 <div className="space-y-1">
-                  {([
-                    { value: 'auto', label: '跟随系统', icon: '🔄' },
-                    { value: 'zh', label: '中文', icon: '🇨🇳' },
-                    { value: 'en', label: 'English', icon: '🇺🇸' },
-                  ] as const).map((opt) => (
+                  {LANG_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => handleLangChange(opt.value)}
@@ -208,7 +218,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                       )}
                     >
                       <span className="text-base">{opt.icon}</span>
-                      <span className="font-medium">{opt.label}</span>
+                      <span className="font-medium">{getLangOptionLabel(opt, lang)}</span>
                       {langPref === opt.value && (
                         <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                       )}
@@ -223,13 +233,13 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
           {tab === 'groups' && (
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-gray-400 uppercase">分组管理</p>
+                <p className="text-xs font-medium text-gray-400 uppercase">{getText('groupManagement', lang)}</p>
                 {!groupEdit && (
                   <button
                     onClick={() => setGroupEdit({ name: '', emoji: '📁' })}
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg"
                   >
-                    <Plus className="w-3 h-3" /> 新增
+                    <Plus className="w-3 h-3" /> {getText('newGroup', lang)}
                   </button>
                 )}
               </div>
@@ -247,7 +257,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                     </select>
                     <input
                       type="text"
-                      placeholder="分组名称"
+                      placeholder={getText('groupName', lang)}
                       value={groupEdit.name}
                       onChange={(e) => setGroupEdit({ ...groupEdit, name: e.target.value })}
                       onKeyDown={(e) => { if (e.key === 'Enter') groupEdit.id ? handleSaveGroup() : handleAddGroup(); }}
@@ -260,13 +270,13 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                       onClick={groupEdit.id ? handleSaveGroup : handleAddGroup}
                       className="flex-1 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg"
                     >
-                      {groupEdit.id ? '保存' : '添加'}
+                      {groupEdit.id ? getText('save', lang) : getText('add', lang)}
                     </button>
                     <button
                       onClick={() => setGroupEdit(null)}
                       className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
                     >
-                      取消
+                      {getText('cancel', lang)}
                     </button>
                   </div>
                 </div>
@@ -281,20 +291,20 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                       <span className="text-base flex-shrink-0">{group.icon || '📁'}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-800 truncate">{group.name}</div>
-                        <div className="text-xs text-gray-400">{count} 个书签</div>
+                        <div className="text-xs text-gray-400">{count} {getText('groupCount', lang)}</div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setGroupEdit({ id: group.id, name: group.name, emoji: group.icon || '📁' })}
                           className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-violet-50 hover:text-violet-600"
-                          title="编辑"
+                          title={getText('edit', lang)}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteGroup(group.id)}
                           className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
-                          title="删除"
+                          title={getText('delete', lang)}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -309,12 +319,12 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
           {/* ─── Data Tab ──────────────────────────────────────────── */}
           {tab === 'data' && (
             <div className="p-4 space-y-4">
-              <p className="text-xs font-medium text-gray-400 uppercase">数据管理</p>
+              <p className="text-xs font-medium text-gray-400 uppercase">{getText('dataManagement', lang)}</p>
 
               {/* Storage Usage */}
               <div className="px-3 py-3 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">存储使用</span>
+                  <span className="text-sm font-medium text-gray-700">{getText('storageUsage', lang)}</span>
                   <span className="text-xs text-gray-500">{storageKB} KB / 100 KB</span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -334,7 +344,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
                 <Download className="w-4 h-4 text-violet-500" />
-                导出数据备份
+                {getText('exportBackup', lang)}
                 <span className="ml-auto text-xs text-gray-400">JSON</span>
               </button>
 
@@ -346,11 +356,11 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                 >
                   <Upload className="w-4 h-4 text-emerald-500" />
-                  导入数据恢复
+                  {getText('importRestore', lang)}
                   <span className="ml-auto text-xs text-gray-400">JSON</span>
                 </button>
                 {importMsg && (
-                  <p className={cn('mt-2 text-xs font-medium', importMsg.includes('成功') ? 'text-emerald-600' : 'text-red-500')}>
+                  <p className={cn('mt-2 text-xs font-medium', importMsg.includes('成功') || importMsg.includes('successful') ? 'text-emerald-600' : 'text-red-500')}>
                     {importMsg}
                   </p>
                 )}

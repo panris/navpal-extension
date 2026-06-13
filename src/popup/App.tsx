@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useAppStore, useVisibleGroups, useVisibleBookmarks } from '@/stores/appStore';
+import { useAppStore, useVisibleGroups, useVisibleBookmarks, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
 import BookmarkGrid from '@/components/BookmarkGrid';
@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { useCurrentLang, getText } from '@/utils/i18n';
 
 type ViewMode = 'default' | 'minimized';
 
@@ -29,9 +30,19 @@ export default function App() {
   const revealMode = useAppStore((s) => s.revealMode);
   const groups = useVisibleGroups();
   const bookmarks = useVisibleBookmarks();
+  const lang = useCurrentLang();
 
   const [viewMode, setViewMode] = useState<ViewMode>('default');
   const [currentTime, setCurrentTime] = useState(formatTime);
+
+  // Initialize language from langPref on mount
+  useEffect(() => {
+    const langPref = useAppStore.getState().langPref;
+    const effectiveLang = getEffectiveLang(langPref);
+    import('@/stores/appStore').then(({ notifyLangChange }) => {
+      notifyLangChange(effectiveLang);
+    });
+  }, []);
 
   // Default active group
   useEffect(() => {
@@ -100,6 +111,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // I18n labels
+  const appName = getText('appName', lang);
+
   return (
     <div
       className="flex flex-col bg-gray-50 relative overflow-hidden transition-all duration-300"
@@ -131,13 +145,13 @@ export default function App() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
             </svg>
-            <span>伴航 NavPal</span>
+            <span>伴航 {appName}</span>
           </div>
           <button
             onClick={handleRestore}
             className="px-4 py-1.5 text-xs font-semibold text-violet-600 bg-white/90 rounded-full hover:bg-white transition-colors"
           >
-            展开
+            {getText('expand', lang)}
           </button>
         </div>
       ) : (

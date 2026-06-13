@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -15,9 +15,33 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Bookmark } from '@/types';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import SortableBookmarkCard from './SortableBookmarkCard';
 import { Eye, EyeOff, Edit3 } from 'lucide-react';
+import type { LangPref } from '@/components/BookmarkCard';
+
+// Get current effective language
+function useCurrentLang(): 'zh' | 'en' {
+  const [lang, setLang] = useState<'zh' | 'en'>(() => {
+    const pref = useAppStore.getState().langPref;
+    return getEffectiveLang(pref as LangPref);
+  });
+
+  useEffect(() => {
+    const unsubscribe = subscribeLang((newLang) => {
+      setLang(newLang);
+    });
+    return unsubscribe;
+  }, []);
+
+  return lang;
+}
+
+// Check if bookmark should be visible based on language
+function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
+  if (region === 'CN' && lang === 'en') return false;
+  return true;
+}
 
 // Skeleton loading state
 function BookmarkSkeleton() {
@@ -38,7 +62,13 @@ function BookmarkSkeleton() {
 }
 
 // Empty state with illustration
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState({ lang, onAdd }: { lang: 'zh' | 'en'; onAdd: () => void }) {
+  const labels = {
+    zh: { title: '还没有书签', desc: '添加你的第一个书签，开始高效导航', button: '添加第一个书签' },
+    en: { title: 'No bookmarks yet', desc: 'Add your first bookmark to start navigating efficiently', button: 'Add First Bookmark' },
+  };
+  const l = labels[lang];
+
   return (
     <div className="flex flex-col items-center justify-center h-full py-8">
       {/* Illustration */}
@@ -54,13 +84,13 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           <span className="text-xs">🚀</span>
         </div>
       </div>
-      <p className="text-base font-medium text-gray-500 mb-1">还没有书签</p>
-      <p className="text-xs text-gray-400 mb-6">添加你的第一个书签，开始高效导航</p>
+      <p className="text-base font-medium text-gray-500 mb-1">{l.title}</p>
+      <p className="text-xs text-gray-400 mb-6">{l.desc}</p>
       <button
         onClick={onAdd}
         className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl hover:shadow-lg transition-all"
       >
-        添加第一个书签
+        {l.button}
       </button>
     </div>
   );
@@ -77,9 +107,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const toggleEditMode = useAppStore((s) => s.toggleEditMode);
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks);
   const activeGroupId = useAppStore((s) => s.activeGroupId);
-  const totalHidden = useAppStore((s) =>
-    s.bookmarks.filter((b) => b.hidden).length
-  );
+  const bookmarksState = useAppStore((s) => s.bookmarks);
+
+  const lang = useCurrentLang();
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -88,18 +118,36 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Search filter
-  const filteredBookmarks = searchQuery
-    ? bookmarks.filter(
-        (b) =>
-          b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.url.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : bookmarks;
+  // Filter bookmarks by language and search
+  const filteredBookmarks = bookmarks.filter((b) => {
+    // Language filter: hide CN bookmarks when in English mode
+    if (!isBookmarkVisible(b.region, lang)) return false;
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchTitle = b.title.toLowerCase().includes(query);
+      const matchUrl = b.url.toLowerCase().includes(query);
+      // Also search in descriptions
+      const matchDescZh = b.description?.zh?.toLowerCase().includes(query);
+      const matchDescEn = b.description?.en?.toLowerCase().includes(query);
+      if (!matchTitle && !matchUrl && !matchDescZh && !matchDescEn) return false;
+    }
+
+    return true;
+  });
 
   // Sort by order
   const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
   const bookmarkIds = sortedBookmarks.map((b) => b.id);
+
+  // Calculate hidden count (only CN bookmarks when in English mode)
+  const totalHidden = bookmarksState.filter((b) => {
+    if (b.hidden && !isRevealMode) return true;
+    // Hidden by language filter
+    if (b.region === 'CN' && lang === 'en' && !isRevealMode) return true;
+    return false;
+  }).length;
 
   const handleDragStart = () => setIsDragging(true);
   const handleDragEnd = (event: DragEndEvent) => {
@@ -120,6 +168,13 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     window.dispatchEvent(event);
   };
 
+  // Bilingual labels
+  const revealLabel = lang === 'zh' ? '全量模式' : 'Reveal All';
+  const editLabel = lang === 'zh' ? '编辑' : 'Edit';
+  const doneLabel = lang === 'zh' ? '完成' : 'Done';
+  const hiddenLabel = lang === 'zh' ? '个隐藏书签' : 'hidden bookmarks';
+  const searchEmptyLabel = lang === 'zh' ? '未找到匹配的书签' : 'No matching bookmarks';
+
   return (
     <div>
       {/* Quick Actions */}
@@ -129,7 +184,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           className="quick-btn flex-1 flex items-center justify-center gap-2 py-3 rounded-xl"
         >
           <Eye className="w-4 h-4 text-gray-700" />
-          <span className="text-sm font-semibold text-gray-700">全量模式</span>
+          <span className="text-sm font-semibold text-gray-700">{revealLabel}</span>
         </button>
         <button
           onClick={toggleEditMode}
@@ -139,12 +194,12 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         >
           {isEditMode ? (
             <>
-              <span className="text-sm font-semibold">完成</span>
+              <span className="text-sm font-semibold">{doneLabel}</span>
             </>
           ) : (
             <>
               <Edit3 className="w-4 h-4" />
-              <span className="text-sm font-semibold">编辑</span>
+              <span className="text-sm font-semibold">{editLabel}</span>
             </>
           )}
         </button>
@@ -155,18 +210,18 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-amber-50 rounded-lg border border-amber-200">
           <EyeOff className="w-4 h-4 text-amber-600" />
           <span className="text-xs font-medium text-amber-700">
-            {totalHidden} 个隐藏书签
+            {totalHidden} {hiddenLabel}
           </span>
         </div>
       )}
 
       {/* Content */}
       {sortedBookmarks.length === 0 && !searchQuery ? (
-        <EmptyState onAdd={toggleEditMode} />
+        <EmptyState lang={lang} onAdd={toggleEditMode} />
       ) : sortedBookmarks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-gray-400">
           <div className="text-4xl mb-2">🔍</div>
-          <p className="text-sm">未找到匹配的书签</p>
+          <p className="text-sm">{searchEmptyLabel}</p>
         </div>
       ) : (
         <DndContext

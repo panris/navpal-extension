@@ -232,7 +232,7 @@ export const useAppStore = create<
   )
 );
 
-// ─── Selectors ────────────────────────────────────────────────────
+// ─── Language-aware Selectors ──────────────────────────────────────
 export const useVisibleGroups = () =>
   useAppStore((state) => {
     if (state.isRevealMode) return state.groups;
@@ -245,9 +245,49 @@ export const useVisibleBookmarks = () =>
     return state.bookmarks.filter((b) => !b.hidden);
   });
 
-export const useGroupBookmarks = (groupId: string) =>
-  useAppStore((state) =>
-    state.bookmarks
-      .filter((b) => b.groupId === groupId && (!b.hidden || state.isRevealMode))
-      .sort((a, b) => a.order - b.order)
-  );
+// 获取当前有效语言
+function getCurrentLang(): 'zh' | 'en' {
+  const pref = useAppStore.getState().langPref;
+  return getEffectiveLang(pref);
+}
+
+// 语言感知的书签 Selector - 根据当前语言过滤分组和书签
+export const useLangGroupBookmarks = (groupId: string | null) =>
+  useAppStore((state) => {
+    const lang = getCurrentLang();
+    const isRevealMode = state.isRevealMode;
+
+    // 过滤分组
+    const visibleGroups = state.groups.filter((g) => !g.hidden || isRevealMode);
+
+    // 过滤书签 - 匹配语言
+    let filteredBookmarks = state.bookmarks.filter((b) => {
+      // 隐藏的书签在普通模式下不显示
+      if (b.hidden && !isRevealMode) return false;
+
+      // 如果指定了分组
+      if (groupId !== null && b.groupId !== groupId) return false;
+
+      // 语言过滤：Global 服务总是显示，CN 服务根据语言判断
+      if (b.region === 'CN' && lang === 'en') {
+        return false; // 选择英文时隐藏中国服务
+      }
+
+      return true;
+    });
+
+    // 按 order 排序
+    filteredBookmarks = filteredBookmarks.sort((a, b) => a.order - b.order);
+
+    return { groups: visibleGroups, bookmarks: filteredBookmarks };
+  });
+
+// ─── Group Name Helper ────────────────────────────────────────────
+// 根据语言获取分组显示名称
+export function getGroupDisplayName(group: { name: string; nameI18n?: { zh: string; en: string } }, lang: 'zh' | 'en'): string {
+  if (group.nameI18n) {
+    return lang === 'en' ? group.nameI18n.en : group.nameI18n.zh;
+  }
+  // 兼容旧数据：直接返回 name
+  return group.name;
+}

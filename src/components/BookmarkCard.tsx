@@ -4,6 +4,7 @@ import { Bookmark } from '@/types';
 import { useAppStore, subscribeLang } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
+import { useCurrentLang, getText } from '@/utils/i18n';
 
 // Color palette for icons - extracted to shared constant
 export const ICON_GRADIENTS = [
@@ -77,14 +78,17 @@ function getDomain(url: string): string {
 
 interface BookmarkCardProps {
   bookmark: Bookmark;
+  forceLang?: 'zh' | 'en'; // Optional: force a specific language display
 }
 
-function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [lang, setLang] = useState<'zh' | 'en'>('zh');
   const [isHovered, setIsHovered] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to language changes - but respect forceLang if set
+  const lang = useCurrentLang();
 
   const isEditMode = useAppStore((s) => s.isEditMode);
   const isRevealMode = useAppStore((s) => s.isRevealMode);
@@ -96,14 +100,6 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
   const iconLetter = getIconLetter(bookmark.url, bookmark.title);
   const iconPattern = getIconPattern(bookmark.id);
   const description = bookmark.description || getDescription(bookmark.url);
-
-  // Subscribe to language changes from store (event-driven, no polling)
-  useEffect(() => {
-    const unsubscribe = subscribeLang((newLang) => {
-      setLang(newLang);
-    });
-    return unsubscribe;
-  }, []);
 
   const handleClick = useCallback(() => {
     if (isEditMode) return;
@@ -140,6 +136,14 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
       setTooltipPos({ x, y });
     }
   }, [showTooltip]);
+
+  // 根据语言获取区域标签文本
+  const getRegionLabel = () => {
+    if (bookmark.region === 'CN') {
+      return getText('chinaService', lang);
+    }
+    return getText('globalService', lang);
+  };
 
   return (
     <div className="relative" onMouseMove={handleMouseMove}>
@@ -229,14 +233,15 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
             {getDomain(bookmark.url)}
           </div>
           <div className="h-px bg-gray-700/30 my-3" />
-          {description.en && (
-            <div className="text-xs text-gray-300 leading-relaxed border-l-2 border-blue-500 pl-3 mb-2">
-              {description.en}
-            </div>
-          )}
-          {description.zh && (
+          {/* 根据语言显示对应介绍 - 只显示当前语言的介绍 */}
+          {lang === 'zh' && description.zh && (
             <div className="text-sm text-white leading-relaxed border-l-2 border-emerald-500 pl-3">
               {description.zh}
+            </div>
+          )}
+          {lang === 'en' && description.en && (
+            <div className="text-xs text-gray-300 leading-relaxed border-l-2 border-blue-500 pl-3">
+              {description.en}
             </div>
           )}
           <div className={cn(
@@ -245,8 +250,8 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
               ? 'bg-red-500/20 text-red-300'
               : 'bg-blue-500/20 text-blue-300'
           )}>
-            <span>{bookmark.region === 'CN' ? '🇨🇳' : '🌍'}</span>
-            <span>{bookmark.region === 'CN' ? '中国服务' : '全球服务'}</span>
+            <span>{bookmark.region === 'CN' ? getText('regionCN', lang) : getText('regionGlobal', lang)}</span>
+            <span>{getRegionLabel()}</span>
           </div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
             <div className="border-8 border-transparent border-t-[#0f172a]" />
@@ -262,7 +267,7 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
             className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-600"
           >
             <Lock className="w-4 h-4" />
-            {bookmark.hidden ? '显示' : '隐藏'}
+            {bookmark.hidden ? getText('show', lang) : getText('hide', lang)}
           </button>
           <button
             onClick={() => deleteBookmark(bookmark.id)}
@@ -271,7 +276,7 @@ function BookmarkCardInner({ bookmark }: BookmarkCardProps) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            删除
+            {getText('delete', lang)}
           </button>
         </div>
       )}
@@ -284,7 +289,8 @@ const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.bookmark.title === next.bookmark.title &&
     prev.bookmark.url === next.bookmark.url &&
-    prev.bookmark.hidden === next.bookmark.hidden;
+    prev.bookmark.hidden === next.bookmark.hidden &&
+    prev.forceLang === next.forceLang;
 });
 
 export default BookmarkCard;

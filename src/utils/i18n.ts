@@ -1,0 +1,132 @@
+// 集中式国际化工具
+// 所有 UI 文本在此定义，根据当前语言自动切换
+
+import { useState, useEffect, useCallback } from 'react';
+import { useAppStore, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import type { LangPref } from '@/components/BookmarkCard';
+
+// ─── 静态翻译文本 ───────────────────────────────────────────────
+const UI_TEXT = {
+  // Header
+  appName: { zh: '伴航', en: 'NavPal' },
+  appTagline: { zh: '快捷导航工作台', en: 'Quick Navigation Hub' },
+  searchPlaceholder: { zh: '搜索书签...', en: 'Search bookmarks...' },
+  revealMode: { zh: '全量', en: 'All' },
+  revealModeLabel: { zh: '全量模式', en: 'All Mode' },
+
+  // Footer
+  bookmarks: { zh: '个书签', en: 'bookmarks' },
+  hidden: { zh: '隐藏', en: 'hidden' },
+
+  // Group Tabs
+  all: { zh: '全部', en: 'All' },
+  editing: { zh: '编辑中', en: 'Editing' },
+  countSuffix: { zh: '个', en: '' },
+
+  // Settings Menu
+  settings: { zh: '设置', en: 'Settings' },
+  window: { zh: '窗口', en: 'Window' },
+  groups: { zh: '分组', en: 'Groups' },
+  data: { zh: '数据', en: 'Data' },
+  expand: { zh: '展开', en: 'Expand' },
+  minimize: { zh: '最小化', en: 'Minimize' },
+  maximize: { zh: '最大化', en: 'Maximize' },
+  interfaceLanguage: { zh: '界面语言', en: 'Interface Language' },
+  followSystem: { zh: '跟随系统', en: 'Follow System' },
+  windowControls: { zh: '窗口控制', en: 'Window Controls' },
+  groupManagement: { zh: '分组管理', en: 'Group Management' },
+  newGroup: { zh: '新增', en: 'New' },
+  save: { zh: '保存', en: 'Save' },
+  cancel: { zh: '取消', en: 'Cancel' },
+  add: { zh: '添加', en: 'Add' },
+  groupName: { zh: '分组名称', en: 'Group Name' },
+  groupCount: { zh: '个书签', en: 'bookmarks' },
+  dataManagement: { zh: '数据管理', en: 'Data Management' },
+  storageUsage: { zh: '存储使用', en: 'Storage Used' },
+  exportBackup: { zh: '导出数据备份', en: 'Export Backup' },
+  importRestore: { zh: '导入数据恢复', en: 'Import & Restore' },
+  importSuccess: { zh: '导入成功！', en: 'Import successful!' },
+  importFailed: { zh: '导入失败', en: 'Import failed' },
+  delete: { zh: '删除', en: 'Delete' },
+  edit: { zh: '编辑', en: 'Edit' },
+
+  // Edit Modal
+  editBookmarks: { zh: '编辑书签', en: 'Edit Bookmarks' },
+  addHideDelete: { zh: '添加、隐藏或删除书签', en: 'Add, hide, or delete bookmarks' },
+  addBookmark: { zh: '添加新书签', en: 'Add Bookmark' },
+  bookmarkTitle: { zh: '书签标题', en: 'Title' },
+  url: { zh: '网址', en: 'URL' },
+  urlPlaceholder: { zh: '网址 https://...', en: 'URL https://...' },
+  pleaseEnterUrl: { zh: '请输入网址', en: 'Please enter URL' },
+  unsupportedProtocol: { zh: '仅支持 http/https 链接', en: 'Only http/https supported' },
+  invalidUrlFormat: { zh: '网址格式不正确', en: 'Invalid URL format' },
+  addInProgress: { zh: '添加中...', en: 'Adding...' },
+  show: { zh: '显示', en: 'Show' },
+  hide: { zh: '隐藏', en: 'Hide' },
+  chineseDesc: { zh: '中文介绍（可选）', en: 'Chinese description (optional)' },
+  englishDesc: { zh: 'English description (optional)', en: 'English description (optional)' },
+
+  // Bookmark Card
+  chinaService: { zh: '中国服务', en: 'China Service' },
+  globalService: { zh: '全球服务', en: 'Global Service' },
+
+  // Bookmark Grid
+  noBookmarks: { zh: '暂无书签', en: 'No bookmarks yet' },
+  addBookmarkHint: { zh: '按 E 键添加书签', en: 'Press E to add bookmarks' },
+
+  // Secret Modal
+  enterSecret: { zh: '输入暗号', en: 'Enter Secret Code' },
+  secretHint: { zh: '请输入暗号进入全量模式', en: 'Enter secret code to enter all mode' },
+  wrongSecret: { zh: '暗号错误', en: 'Wrong code' },
+  tryAgain: { zh: '重试', en: 'Try Again' },
+
+  // Region labels
+  regionCN: { zh: '🇨🇳', en: '🇨🇳' },
+  regionGlobal: { zh: '🌍', en: '🌍' },
+} as const;
+
+// ─── 类型定义 ─────────────────────────────────────────────────
+export type UILabel = keyof typeof UI_TEXT;
+
+export function getText(label: UILabel, lang: 'zh' | 'en'): string {
+  return UI_TEXT[label][lang];
+}
+
+// ─── Hook: 获取当前语言 ────────────────────────────────────────
+export function useCurrentLang(): 'zh' | 'en' {
+  const [lang, setLang] = useState<'zh' | 'en'>(() => {
+    const pref = useAppStore.getState().langPref;
+    return getEffectiveLang(pref as LangPref);
+  });
+
+  useEffect(() => {
+    const unsubscribe = subscribeLang((newLang) => {
+      setLang(newLang);
+    });
+    return unsubscribe;
+  }, []);
+
+  return lang;
+}
+
+// ─── Hook: 获取翻译文本 ────────────────────────────────────────
+export function useT(): (label: UILabel) => string {
+  const lang = useCurrentLang();
+  return useCallback((label: UILabel) => getText(label, lang), [lang]);
+}
+
+// ─── 数字格式化（根据语言）──────────────────────────────────────
+export function formatCount(count: number, lang: 'zh' | 'en'): string {
+  return lang === 'zh' ? `${count} 个` : `${count}`;
+}
+
+// ─── 语言选项 ──────────────────────────────────────────────────
+export const LANG_OPTIONS: Array<{ value: LangPref; label: { zh: string; en: string }; icon: string }> = [
+  { value: 'auto', label: { zh: '跟随系统', en: 'Follow System' }, icon: '🔄' },
+  { value: 'zh', label: { zh: '中文', en: '中文' }, icon: '🇨🇳' },
+  { value: 'en', label: { zh: 'English', en: 'English' }, icon: '🇺🇸' },
+];
+
+export function getLangOptionLabel(opt: typeof LANG_OPTIONS[number], lang: 'zh' | 'en'): string {
+  return opt.label[lang];
+}
