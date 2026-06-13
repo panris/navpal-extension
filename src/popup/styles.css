@@ -12,11 +12,7 @@
 
 body {
   margin: 0;
-  min-width: 360px;
-  max-width: 400px;
-  min-height: 500px;
-  max-height: 600px;
-  background: #f8fafc;
+  /* Dimensions controlled by useResizable hook via App.tsx state */
 }
 
 /* Status Bar */
@@ -295,6 +291,32 @@ body {
   height: 4px;
   background: rgba(0, 0, 0, 0.15);
   border-radius: 2px;
+}
+
+/* Resize Handle */
+.resize-handle {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: se-resize;
+  border-radius: 4px;
+  transition: background 0.15s;
+  z-index: 10;
+  color: #94a3b8;
+}
+
+.resize-handle:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.resize-handle:active {
+  background: rgba(102, 126, 234, 0.2);
 }
 
 /* Scrollbar styling */

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -17,9 +17,10 @@ import {
 import { Bookmark } from '@/types';
 import { useAppStore, isBookmarkVisibleInGroup, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import SortableBookmarkCard from './SortableBookmarkCard';
-import { Eye, Edit3 } from 'lucide-react';
+import { Eye, Edit3, Copy, ExternalLink, ChevronRight, Trash2, EyeOff, ArrowLeft, UserX } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import type { LangPref } from '@/components/BookmarkCard';
+import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 
 // Get current effective language
 function useCurrentLang(): 'zh' | 'en' {
@@ -91,18 +92,176 @@ interface BookmarkGridProps {
 }
 
 export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
+  const lang = useCurrentLang();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{
+    bookmarkId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [showBatchBar, setShowBatchBar] = useState(false);
+  const [batchActionMenu, setBatchActionMenu] = useState<string | null>(null);
+
+  const openBookmark = useAppStore((s) => s.openBookmark);
+  const moveBookmark = useAppStore((s) => s.moveBookmark);
+  const deleteBookmarkGlobally = useAppStore((s) => s.deleteBookmarkGlobally);
+  const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
+  const deleteBookmarkFromGroup = useAppStore((s) => s.deleteBookmarkFromGroup);
+  const groups = useAppStore((s) => s.groups);
+  const activeGroupId = useAppStore((s) => s.activeGroupId);
+
+  // ── Compute filtered/sorted bookmarks first (before hook) ────────
   const searchQuery = useAppStore((s) => s.searchQuery);
   const isRevealMode = useAppStore((s) => s.isRevealMode);
   const editMode = useAppStore((s) => s.editMode);
   const setEditMode = useAppStore((s) => s.setEditMode);
-  const activeGroupId = useAppStore((s) => s.activeGroupId);
   const bookmarksState = useAppStore((s) => s.bookmarks);
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks);
-  const groups = useAppStore((s) => s.groups);
 
-  const lang = useCurrentLang();
+  const filteredBookmarks = bookmarks.filter((b) => {
+    if (!isBookmarkVisible(b.region, lang)) return false;
+    if (editMode === 'group' && activeGroupId) {
+      if (b.groupId !== activeGroupId) return false;
+    }
+    if (editMode === 'global') {
+      if (b.deletedAt === null || b.deletedAt === undefined) return true;
+      if (isRevealMode) return true;
+      return false;
+    }
+    if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchTitle = b.title.toLowerCase().includes(query);
+      const matchUrl = b.url.toLowerCase().includes(query);
+      const matchDescZh = b.description?.zh?.toLowerCase().includes(query);
+      const matchDescEn = b.description?.en?.toLowerCase().includes(query);
+      if (!matchTitle && !matchUrl && !matchDescZh && !matchDescEn) return false;
+    }
+    return true;
+  });
 
-  const [isDragging, setIsDragging] = useState(false);
+  const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
+  const bookmarkIds = sortedBookmarks.map((b) => b.id);
+
+  // ── Keyboard navigation ─────────────────────────────────────────
+  const COLUMNS = 3;
+
+  const { selectedIndex, containerRef } = useKeyboardNavigation({
+    columns: COLUMNS,
+    totalItems: sortedBookmarks.length,
+    enabled: editMode === 'none' && !searchQuery,
+    onEnter: (index) => {
+      const bookmark = sortedBookmarks[index];
+      if (bookmark) openBookmark(bookmark.id);
+    },
+  });
+
+  // Batch selection: Space key toggles the focused bookmark
+  const handleSpaceKey = useCallback(
+    (index: number) => {
+      const bookmark = sortedBookmarks[index];
+      if (!bookmark) return;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(bookmark.id)) {
+          next.delete(bookmark.id);
+        } else {
+          next.add(bookmark.id);
+        }
+        return next;
+      });
+    },
+    [sortedBookmarks]
+  );
+
+  // Sync Space handler into keyboard nav hook
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === ' ' && !e.ctrlKey && !e.metaKey && editMode === 'none' && !searchQuery) {
+        e.preventDefault();
+        if (selectedIndex >= 0) handleSpaceKey(selectedIndex);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedIndex, handleSpaceKey, editMode, searchQuery]);
+
+  // Show/hide batch bar based on selection
+  useEffect(() => {
+    setShowBatchBar(selectedIds.size > 0);
+  }, [selectedIds]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    const handler = () => setContextMenu(null);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Batch actions
+  const handleBatchDelete = () => {
+    selectedIds.forEach((id) => deleteBookmarkGlobally(id));
+    setSelectedIds(new Set());
+    setBatchActionMenu(null);
+  };
+
+  const handleBatchHide = () => {
+    selectedIds.forEach((id) => hideBookmarkGlobally(id));
+    setSelectedIds(new Set());
+    setBatchActionMenu(null);
+  };
+
+  const handleBatchMove = (targetGroupId: string) => {
+    selectedIds.forEach((id) => moveBookmark(id, targetGroupId));
+    setSelectedIds(new Set());
+    setBatchActionMenu(null);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, bookmarkId: string) => {
+    e.preventDefault();
+    setContextMenu({ bookmarkId, x: e.clientX, y: e.clientY });
+  };
+
+  // Context menu actions
+  const handleContextCopyUrl = () => {
+    if (!contextMenu) return;
+    const bookmark = bookmarksState.find((b) => b.id === contextMenu.bookmarkId);
+    if (bookmark) navigator.clipboard.writeText(bookmark.url);
+    setContextMenu(null);
+  };
+
+  const handleContextOpenNewTab = () => {
+    if (!contextMenu) return;
+    const bookmark = bookmarksState.find((b) => b.id === contextMenu.bookmarkId);
+    if (bookmark) window.open(bookmark.url, '_blank');
+    setContextMenu(null);
+  };
+
+  const handleContextMoveTo = (targetGroupId: string) => {
+    if (!contextMenu) return;
+    moveBookmark(contextMenu.bookmarkId, targetGroupId);
+    setContextMenu(null);
+  };
+
+  const handleContextDelete = () => {
+    if (!contextMenu) return;
+    deleteBookmarkGlobally(contextMenu.bookmarkId);
+    setContextMenu(null);
+  };
+
+  const handleContextHide = () => {
+    if (!contextMenu) return;
+    hideBookmarkGlobally(contextMenu.bookmarkId);
+    setContextMenu(null);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -113,43 +272,6 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const currentGroupName = activeGroupId
     ? groups.find((g) => g.id === activeGroupId)?.name || ''
     : '';
-
-  // Filter bookmarks based on mode and language
-  const filteredBookmarks = bookmarks.filter((b) => {
-    // Language filter
-    if (!isBookmarkVisible(b.region, lang)) return false;
-
-    // In group edit mode, only show bookmarks from current group
-    if (editMode === 'group' && activeGroupId) {
-      if (b.groupId !== activeGroupId) return false;
-    }
-
-    // In global edit mode, show all bookmarks (including deleted ones)
-    if (editMode === 'global') {
-      if (b.deletedAt === null || b.deletedAt === undefined) return true;
-      if (isRevealMode) return true;
-      return false;
-    }
-
-    // Normal mode: check visibility
-    if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchTitle = b.title.toLowerCase().includes(query);
-      const matchUrl = b.url.toLowerCase().includes(query);
-      const matchDescZh = b.description?.zh?.toLowerCase().includes(query);
-      const matchDescEn = b.description?.en?.toLowerCase().includes(query);
-      if (!matchTitle && !matchUrl && !matchDescZh && !matchDescEn) return false;
-    }
-
-    return true;
-  });
-
-  // Sort by order
-  const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
-  const bookmarkIds = sortedBookmarks.map((b) => b.id);
 
   // Calculate hidden count - ONLY for "All" tab (activeGroupId === null)
   const totalHidden = activeGroupId === null ? bookmarksState.filter((b) => {
@@ -201,6 +323,110 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   return (
     <div>
+      {/* Batch Action Bar */}
+      {showBatchBar && (
+        <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-xl flex items-center gap-2">
+          <span className="text-sm font-semibold text-violet-700">
+            {selectedIds.size} {lang === 'zh' ? '已选中' : 'selected'}
+          </span>
+          <div className="ml-auto flex gap-1.5">
+            <button
+              onClick={() => setBatchActionMenu(batchActionMenu ? null : 'move')}
+              className="px-3 py-1 text-xs font-semibold bg-white text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-50"
+            >
+              {lang === 'zh' ? '移动到' : 'Move to'}
+            </button>
+            <button
+              onClick={handleBatchHide}
+              className="px-3 py-1 text-xs font-semibold bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50"
+            >
+              {lang === 'zh' ? '隐藏' : 'Hide'}
+            </button>
+            <button
+              onClick={handleBatchDelete}
+              className="px-3 py-1 text-xs font-semibold bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
+            >
+              {lang === 'zh' ? '删除' : 'Delete'}
+            </button>
+            <button
+              onClick={handleClearSelection}
+              className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+          {/* Move-to submenu */}
+          {batchActionMenu === 'move' && (
+            <div className="absolute right-0 mt-2 mr-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+              {groups
+                .filter((g) => g.id !== activeGroupId)
+                .map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => handleBatchMove(g.id)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <span>{g.icon || '📁'}</span>
+                    <span className="truncate">{g.name}</span>
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick Remove Bar */}
+      <div className="mb-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">
+            {lang === 'zh' ? '快速移除' : 'Quick Remove'}
+          </span>
+          <div className="ml-auto flex gap-1.5">
+            {/* Remove from group */}
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => {
+                  const bookmark = bookmarksState.find((b) => b.id === id);
+                  if (bookmark && activeGroupId) {
+                    deleteBookmarkFromGroup(id, activeGroupId);
+                  }
+                });
+                setSelectedIds(new Set());
+              }}
+              className="px-3 py-1 text-xs font-medium bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
+              title={lang === 'zh' ? '移出当前分组' : 'Remove from current group'}
+            >
+              <ArrowLeft className="w-3 h-3" />
+              {lang === 'zh' ? '移出分组' : 'From Group'}
+            </button>
+            {/* Remove from all groups */}
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => hideBookmarkGlobally(id));
+                setSelectedIds(new Set());
+              }}
+              className="px-3 py-1 text-xs font-medium bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1"
+              title={lang === 'zh' ? '从所有分组移除（隐藏）' : 'Remove from all groups (hide)'}
+            >
+              <EyeOff className="w-3 h-3" />
+              {lang === 'zh' ? '全部隐藏' : 'Hide All'}
+            </button>
+            {/* Delete completely */}
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => deleteBookmarkGlobally(id));
+                setSelectedIds(new Set());
+              }}
+              className="px-3 py-1 text-xs font-medium bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
+              title={lang === 'zh' ? '彻底删除' : 'Delete permanently'}
+            >
+              <Trash2 className="w-3 h-3" />
+              {lang === 'zh' ? '彻底删除' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <div className="flex gap-2 mb-4">
         {/* Reveal Mode Button */}
@@ -277,18 +503,81 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={bookmarkIds} strategy={rectSortingStrategy}>
-            <div className={`grid grid-cols-3 gap-3 ${isDragging ? 'select-none' : ''}`}>
-              {sortedBookmarks.map((bookmark) => (
+            <div
+              ref={containerRef}
+              className={`grid grid-cols-3 gap-3 ${isDragging ? 'select-none' : ''}`}
+            >
+              {sortedBookmarks.map((bookmark, index) => (
                 <SortableBookmarkCard
                   key={bookmark.id}
                   bookmark={bookmark}
                   groupId={activeGroupId || bookmark.groupId}
                   isDragging={isDragging}
+                  isKeyboardSelected={selectedIndex === index}
+                  isSelected={selectedIds.has(bookmark.id)}
+                  dataCardIndex={index}
+                  dataCardId={bookmark.id}
+                  onContextMenu={handleContextMenu}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* Right-click Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 min-w-[180px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={handleContextCopyUrl}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Copy className="w-4 h-4 text-violet-500" />
+            {getText('copyUrl', lang)}
+          </button>
+          <button
+            onClick={handleContextOpenNewTab}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 text-blue-500" />
+            {getText('openInNewTab', lang)}
+          </button>
+          <div className="h-px bg-gray-100 my-1.5" />
+          <div className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+            {getText('moveTo', lang)}
+          </div>
+          {groups
+            .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
+            .map((g) => (
+              <button
+                key={g.id}
+                onClick={() => handleContextMoveTo(g.id)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span>{g.icon || '📁'}</span>
+                <span className="truncate">{g.name}</span>
+              </button>
+            ))}
+          <div className="h-px bg-gray-100 my-1.5" />
+          <button
+            onClick={handleContextHide}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+          >
+            <EyeOff className="w-4 h-4" />
+            {getText('hideBookmark', lang)}
+          </button>
+          <button
+            onClick={handleContextDelete}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            {getText('deleteAction', lang)}
+          </button>
+        </div>
       )}
     </div>
   );

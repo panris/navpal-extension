@@ -90,6 +90,13 @@ export const i18n = {
 
   // 快捷键提示
   shortcutTip: { zh: '按 E 编辑 · 按 R 全量 · 按 / 搜索', en: 'Press E to edit · R for reveal · / to search' },
+
+  // 批量操作
+  batchSelected: { zh: '已选中', en: 'selected' },
+  moveTo: { zh: '移动到', en: 'Move to' },
+  copyUrl: { zh: '复制链接', en: 'Copy URL' },
+  openInNewTab: { zh: '新标签页打开', en: 'Open in New Tab' },
+  hideBookmark: { zh: '隐藏书签', en: 'Hide Bookmark' },
 } as const;
 
 export type I18nKey = keyof typeof i18n;

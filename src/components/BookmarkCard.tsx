@@ -77,9 +77,11 @@ interface BookmarkCardProps {
   bookmark: Bookmark;
   groupId: string;
   forceLang?: 'zh' | 'en';
+  isKeyboardSelected?: boolean;
+  isSelected?: boolean;
 }
 
-function BookmarkCardInner({ bookmark, groupId, forceLang }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, groupId, forceLang, isKeyboardSelected, isSelected }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -148,6 +150,9 @@ function BookmarkCardInner({ bookmark, groupId, forceLang }: BookmarkCardProps) 
       setTooltipPos({ x, y });
     }
   }, [showTooltip]);
+
+  // Keyboard/selection focused state
+  const isFocused = (isKeyboardSelected || isSelected) && editMode === 'none';
 
   // Get region label
   const getRegionLabel = () => {
@@ -243,7 +248,8 @@ function BookmarkCardInner({ bookmark, groupId, forceLang }: BookmarkCardProps) 
           'bookmark-card flex flex-col items-center p-3 w-full relative',
           cardOpacity,
           editMode !== 'none' && 'ring-2 ring-blue-400 ring-offset-1 cursor-pointer',
-          editMode === 'none' && !isDeleted && 'hover:scale-105 transition-transform'
+          editMode === 'none' && !isDeleted && 'hover:scale-105 transition-transform',
+          isFocused && 'ring-2 ring-violet-400 ring-offset-2'
         )}
       >
         {/* Status Badges */}
@@ -371,7 +377,8 @@ const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.bookmark.title === next.bookmark.title &&
     prev.bookmark.url === next.bookmark.url &&
-    prev.groupId === next.groupId;
+    prev.groupId === next.groupId &&
+    prev.isSelected === next.isSelected;
 });
 
 export default BookmarkCard;

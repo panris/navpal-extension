@@ -7,7 +7,9 @@ import Footer from '@/components/Footer';
 import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import ResizeHandle from '@/components/ResizeHandle';
 import { useCurrentLang, getText } from '@/utils/i18n';
+import { useResizable } from '@/hooks/useResizable';
 
 type ViewMode = 'default' | 'minimized';
 
@@ -34,6 +36,14 @@ export default function App() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('default');
   const [currentTime, setCurrentTime] = useState(formatTime);
+
+  // ── Resizable popup ─────────────────────────────────────────────
+  const { width, height, isResizing, handleMouseDown } = useResizable({
+    minWidth: 320,
+    maxWidth: 800,
+    minHeight: 400,
+    maxHeight: 800,
+  });
 
   // Initialize language from langPref on mount
   useEffect(() => {
@@ -114,10 +124,15 @@ export default function App() {
   // I18n labels
   const appName = getText('appName', lang);
 
+  const containerHeight = viewMode === 'minimized' ? '64px' : `${height}px`;
+
   return (
     <div
       className="flex flex-col bg-gray-50 relative overflow-hidden transition-all duration-300"
-      style={{ height: viewMode === 'minimized' ? '64px' : '100vh' }}
+      style={{
+        width: `${width}px`,
+        height: containerHeight,
+      }}
     >
       {/* Status Bar */}
       <div className="status-bar">
@@ -186,6 +201,16 @@ export default function App() {
 
       {/* Home Indicator */}
       {viewMode !== 'minimized' && <div className="home-indicator" />}
+
+      {/* Resize Handle */}
+      {viewMode !== 'minimized' && (
+        <ResizeHandle onMouseDown={handleMouseDown} />
+      )}
+
+      {/* Resizing overlay */}
+      {isResizing && (
+        <div className="absolute inset-0 pointer-events-none z-50" />
+      )}
     </div>
   );
 }
