@@ -7,7 +7,7 @@ export interface Bookmark {
   icon?: string;
   region: 'CN' | 'Global' | null;
   regionManual: boolean;
-  hidden: boolean;
+  hidden: boolean;  // 全局隐藏状态
   groupId: string;
   order: number;
   createdAt: number;
@@ -18,6 +18,12 @@ export interface Bookmark {
     en: string;
     zh: string;
   };
+  // 软删除时间戳（null = 未删除）
+  deletedAt?: number | null;
+  // 分组级别的隐藏状态（用于分组编辑时独立隐藏，不影响全局）
+  groupHidden?: Record<string, boolean>;  // { [groupId]: true }
+  // 分组级别的软删除状态（用于分组编辑时删除，不影响全局）
+  groupDeleted?: Record<string, number>;  // { [groupId]: deletedTimestamp }
 }
 
 // 分组名称支持中英文
@@ -55,6 +61,15 @@ export interface AppSettings {
   schemaVersion: number;
 }
 
+// 编辑模式类型
+export type EditMode = 'none' | 'group' | 'global';
+
+// 全局书签状态（用于全局编辑）
+export interface GlobalBookmarkState {
+  hidden: boolean;
+  deletedAt: number | null;
+}
+
 export interface AppState {
   // 数据
   groups: Group[];
@@ -63,16 +78,20 @@ export interface AppState {
 
   // 运行时状态
   isRevealMode: boolean;           // 全量无痕模式
-  isEditMode: boolean;
   activeGroupId: string | null;
   searchQuery: string;
+
+  // 编辑模式：none = 无编辑模式, group = 分组编辑, global = 全局编辑
+  editMode: EditMode;
 
   // 动作
   revealMode: () => void;
   exitRevealMode: () => void;
-  toggleEditMode: () => void;
   setActiveGroup: (id: string | null) => void;
   setSearchQuery: (query: string) => void;
+
+  // 编辑模式切换
+  setEditMode: (mode: EditMode) => void;
 
   // 分组操作
   addGroup: (name: string, icon?: string) => void;
@@ -80,12 +99,18 @@ export interface AppState {
   deleteGroup: (id: string) => void;
   reorderGroups: (groupIds: string[]) => void;
 
-  // 书签操作
+  // 书签操作（分组级别）
   addBookmark: (bookmark: Omit<Bookmark, 'id' | 'order' | 'createdAt' | 'updatedAt'>) => void;
   updateBookmark: (id: string, updates: Partial<Bookmark>) => void;
-  deleteBookmark: (id: string) => void;
+  deleteBookmarkFromGroup: (id: string, groupId: string) => void;  // 从分组删除（仅在分组编辑时）
   reorderBookmarks: (groupId: string, bookmarkIds: string[]) => void;
   moveBookmark: (bookmarkId: string, targetGroupId: string) => void;
+
+  // 全局书签操作（全局编辑模式）
+  hideBookmarkGlobally: (id: string) => void;
+  showBookmarkGlobally: (id: string) => void;
+  deleteBookmarkGlobally: (id: string) => void;  // 全局软删除
+  restoreBookmark: (id: string) => void;  // 恢复删除
 
   // 设置操作
   updateSettings: (updates: Partial<AppSettings>) => void;

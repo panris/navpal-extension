@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppState, Group, Bookmark } from '@/types';
+import { AppState, Group, Bookmark, EditMode } from '@/types';
 import { generateId, autoDetectRegion } from '@/utils';
 import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/seedData';
 import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
@@ -43,10 +43,16 @@ function migrateData(state: { groups: Group[]; bookmarks: Bookmark[]; settings: 
   const version = state.settings?.schemaVersion ?? 0;
   if (version >= CURRENT_SCHEMA_VERSION) return state;
 
-  // v0 → v1: add schemaVersion, lastAccessedAt
+  // v0 → v1: add schemaVersion, lastAccessedAt, groupHidden, groupDeleted, deletedAt
   const migrated = {
     ...state,
-    bookmarks: state.bookmarks.map((b) => ({ ...b, lastAccessedAt: b.lastAccessedAt ?? 0 })),
+    bookmarks: state.bookmarks.map((b) => ({
+      ...b,
+      lastAccessedAt: b.lastAccessedAt ?? 0,
+      groupHidden: b.groupHidden ?? {},
+      groupDeleted: b.groupDeleted ?? {},
+      deletedAt: b.deletedAt ?? null,
+    })),
     settings: { ...DEFAULT_SETTINGS, ...state.settings, schemaVersion: CURRENT_SCHEMA_VERSION },
   };
 
@@ -54,7 +60,7 @@ function migrateData(state: { groups: Group[]; bookmarks: Bookmark[]; settings: 
   return migrated;
 }
 
-// ─── Store ────────────────────────────────────────────────────────
+// ─── Store ───────────────────────────────────────────────────────
 export const useAppStore = create<
   AppState & { langPref: LangPref; setLangPref: (p: LangPref) => void }
 >()(
@@ -65,9 +71,9 @@ export const useAppStore = create<
       settings: DEFAULT_SETTINGS,
 
       isRevealMode: false,
-      isEditMode: false,
       activeGroupId: null,
       searchQuery: '',
+      editMode: 'none',
 
       langPref: 'auto',
       setLangPref: (pref) => {
@@ -79,9 +85,11 @@ export const useAppStore = create<
       // 模式切换
       revealMode: () => set({ isRevealMode: true }),
       exitRevealMode: () => set({ isRevealMode: false }),
-      toggleEditMode: () => set((state) => ({ isEditMode: !state.isEditMode })),
       setActiveGroup: (id) => set({ activeGroupId: id }),
       setSearchQuery: (query) => set({ searchQuery: query }),
+
+      // 编辑模式切换
+      setEditMode: (mode: EditMode) => set({ editMode: mode }),
 
       // 分组操作
       addGroup: (name, icon) => {
@@ -122,7 +130,7 @@ export const useAppStore = create<
         }));
       },
 
-      // 书签操作
+      // 书签操作（分组级别 - 新增到某个分组）
       addBookmark: (bookmark) => {
         const state = get();
         const groupBookmarks = state.bookmarks.filter((b) => b.groupId === bookmark.groupId);
@@ -137,6 +145,9 @@ export const useAppStore = create<
           createdAt: Date.now(),
           updatedAt: Date.now(),
           lastAccessedAt: 0,
+          deletedAt: null,
+          groupHidden: {},
+          groupDeleted: {},
         };
 
         const newBookmarks = [...state.bookmarks, newBookmark];
@@ -160,9 +171,18 @@ export const useAppStore = create<
         }));
       },
 
-      deleteBookmark: (id) => {
+      // 从分组删除书签（仅在分组编辑模式时使用，不影响全局数据）
+      deleteBookmarkFromGroup: (id, groupId) => {
         set((state) => ({
-          bookmarks: state.bookmarks.filter((b) => b.id !== id),
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  groupDeleted: { ...b.groupDeleted, [groupId]: Date.now() },
+                  updatedAt: Date.now(),
+                }
+              : b
+          ),
         }));
       },
 
@@ -191,6 +211,42 @@ export const useAppStore = create<
         });
       },
 
+      // 全局隐藏书签（全局编辑模式）
+      hideBookmarkGlobally: (id) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id ? { ...b, hidden: true, updatedAt: Date.now() } : b
+          ),
+        }));
+      },
+
+      // 全局显示书签（全局编辑模式）
+      showBookmarkGlobally: (id) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id ? { ...b, hidden: false, updatedAt: Date.now() } : b
+          ),
+        }));
+      },
+
+      // 全局软删除书签（全局编辑模式 - 标记为删除，可恢复）
+      deleteBookmarkGlobally: (id) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id ? { ...b, deletedAt: Date.now(), updatedAt: Date.now() } : b
+          ),
+        }));
+      },
+
+      // 恢复删除的书签（全局编辑模式）
+      restoreBookmark: (id) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) =>
+            b.id === id ? { ...b, deletedAt: null, updatedAt: Date.now() } : b
+          ),
+        }));
+      },
+
       // 记录访问时间（最近使用排序用）
       recordAccess: (id) => {
         set((state) => ({
@@ -204,7 +260,6 @@ export const useAppStore = create<
       openBookmark: (id) => {
         const bookmark = get().bookmarks.find((b) => b.id === id);
         if (!bookmark) return;
-        // 先记录访问，再跳转
         get().recordAccess(id);
         window.open(bookmark.url, '_blank');
         window.close();
@@ -251,6 +306,35 @@ function getCurrentLang(): 'zh' | 'en' {
   return getEffectiveLang(pref);
 }
 
+// ─── Helper Functions ──────────────────────────────────────────────
+
+// 判断书签在指定分组中是否可见
+export function isBookmarkVisibleInGroup(bookmark: Bookmark, groupId: string, isRevealMode: boolean): boolean {
+  // 全局软删除的书签：仅在全量模式可见
+  if (bookmark.deletedAt !== null && bookmark.deletedAt !== undefined && !isRevealMode) {
+    return false;
+  }
+
+  // 分组级别的删除状态
+  const groupDeletedAt = bookmark.groupDeleted?.[groupId];
+  if (groupDeletedAt && !isRevealMode) {
+    return false;
+  }
+
+  // 分组级别的隐藏状态
+  const groupHidden = bookmark.groupHidden?.[groupId];
+  if (groupHidden && !isRevealMode) {
+    return false;
+  }
+
+  // 全局隐藏状态
+  if (bookmark.hidden && !isRevealMode) {
+    return false;
+  }
+
+  return true;
+}
+
 // 语言感知的书签 Selector - 根据当前语言过滤分组和书签
 export const useLangGroupBookmarks = (groupId: string | null) =>
   useAppStore((state) => {
@@ -260,17 +344,17 @@ export const useLangGroupBookmarks = (groupId: string | null) =>
     // 过滤分组
     const visibleGroups = state.groups.filter((g) => !g.hidden || isRevealMode);
 
-    // 过滤书签 - 匹配语言
+    // 过滤书签
     let filteredBookmarks = state.bookmarks.filter((b) => {
-      // 隐藏的书签在普通模式下不显示
-      if (b.hidden && !isRevealMode) return false;
-
-      // 如果指定了分组
+      // 如果指定了分组，只显示该分组的书签
       if (groupId !== null && b.groupId !== groupId) return false;
+
+      // 检查可见性
+      if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
 
       // 语言过滤：Global 服务总是显示，CN 服务根据语言判断
       if (b.region === 'CN' && lang === 'en') {
-        return false; // 选择英文时隐藏中国服务
+        return false;
       }
 
       return true;
@@ -288,6 +372,5 @@ export function getGroupDisplayName(group: { name: string; nameI18n?: { zh: stri
   if (group.nameI18n) {
     return lang === 'en' ? group.nameI18n.en : group.nameI18n.zh;
   }
-  // 兼容旧数据：直接返回 name
   return group.name;
 }

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
-import { Lock } from 'lucide-react';
+import React, { useState, useRef, useCallback, memo } from 'react';
+import { Lock, EyeOff, Trash2, RotateCcw } from 'lucide-react';
 import { Bookmark } from '@/types';
-import { useAppStore, subscribeLang } from '@/stores/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
 import { useCurrentLang, getText } from '@/utils/i18n';
@@ -21,9 +21,6 @@ export const ICON_GRADIENTS = [
 ];
 
 export type LangPref = 'auto' | 'zh' | 'en';
-
-// Re-export for SettingsMenu compatibility
-export { subscribeLang };
 
 export function getLangPref(): LangPref {
   return useAppStore.getState().langPref;
@@ -78,22 +75,26 @@ function getDomain(url: string): string {
 
 interface BookmarkCardProps {
   bookmark: Bookmark;
-  forceLang?: 'zh' | 'en'; // Optional: force a specific language display
+  groupId: string;
+  forceLang?: 'zh' | 'en';
 }
 
-function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, groupId, forceLang }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Subscribe to language changes - but respect forceLang if set
   const lang = useCurrentLang();
 
-  const isEditMode = useAppStore((s) => s.isEditMode);
-  const isRevealMode = useAppStore((s) => s.isRevealMode);
+  // Store state
+  const editMode = useAppStore((s) => s.editMode);
   const updateBookmark = useAppStore((s) => s.updateBookmark);
-  const deleteBookmark = useAppStore((s) => s.deleteBookmark);
+  const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
+  const showBookmarkGlobally = useAppStore((s) => s.showBookmarkGlobally);
+  const deleteBookmarkGlobally = useAppStore((s) => s.deleteBookmarkGlobally);
+  const deleteBookmarkFromGroup = useAppStore((s) => s.deleteBookmarkFromGroup);
+  const restoreBookmark = useAppStore((s) => s.restoreBookmark);
   const openBookmark = useAppStore((s) => s.openBookmark);
 
   const iconStyle = getIconStyle(bookmark.id);
@@ -101,17 +102,28 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
   const iconPattern = getIconPattern(bookmark.id);
   const description = bookmark.description || getDescription(bookmark.url);
 
+  // Check states
+  const isGroupHidden = bookmark.groupHidden?.[groupId];
+  const isGroupDeleted = bookmark.groupDeleted?.[groupId];
+  const isGloballyHidden = bookmark.hidden;
+  const isGloballyDeleted = bookmark.deletedAt !== null && bookmark.deletedAt !== undefined;
+  const isDeleted = isGloballyDeleted;
+  const isCardHidden = isGloballyHidden || isGroupHidden;
+
+  // Card opacity based on state
+  const cardOpacity = isGloballyDeleted || isGroupDeleted ? 'opacity-40' : '';
+
   const handleClick = useCallback(() => {
-    if (isEditMode) return;
+    if (editMode !== 'none') return;
     openBookmark(bookmark.id);
-  }, [isEditMode, bookmark.id, openBookmark]);
+  }, [editMode, bookmark.id, openBookmark]);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
-    if (!isEditMode && description) {
+    if (description && editMode === 'none') {
       setShowTooltip(true);
     }
-  }, [isEditMode, description]);
+  }, [description, editMode]);
 
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
@@ -137,12 +149,88 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
     }
   }, [showTooltip]);
 
-  // 根据语言获取区域标签文本
+  // Get region label
   const getRegionLabel = () => {
     if (bookmark.region === 'CN') {
       return getText('chinaService', lang);
     }
     return getText('globalService', lang);
+  };
+
+  // Action handlers based on edit mode
+  const handleHide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editMode === 'group') {
+      updateBookmark(bookmark.id, {
+        groupHidden: { ...bookmark.groupHidden, [groupId]: true }
+      });
+    } else if (editMode === 'global') {
+      hideBookmarkGlobally(bookmark.id);
+    }
+  };
+
+  const handleShow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editMode === 'group') {
+      const newGroupHidden = { ...bookmark.groupHidden };
+      delete newGroupHidden[groupId];
+      updateBookmark(bookmark.id, { groupHidden: newGroupHidden });
+    } else if (editMode === 'global') {
+      showBookmarkGlobally(bookmark.id);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editMode === 'group') {
+      deleteBookmarkFromGroup(bookmark.id, groupId);
+    } else if (editMode === 'global') {
+      deleteBookmarkGlobally(bookmark.id);
+    }
+  };
+
+  const handleRestore = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editMode === 'global') {
+      restoreBookmark(bookmark.id);
+    }
+  };
+
+  // Edit mode action buttons
+  const renderEditActions = () => {
+    if (editMode === 'none') return null;
+
+    return (
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 context-menu z-10 min-w-[140px]">
+        {/* Show/Hide */}
+        {isCardHidden || isGloballyDeleted ? (
+          <button
+            onClick={isGloballyDeleted ? handleRestore : handleShow}
+            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-emerald-600"
+          >
+            <RotateCcw className="w-4 h-4" />
+            {isGloballyDeleted ? getText('restore', lang) : getText('showInGroup', lang)}
+          </button>
+        ) : (
+          <button
+            onClick={handleHide}
+            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-600"
+          >
+            {editMode === 'group' ? <EyeOff className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            {editMode === 'group' ? getText('hideFromGroup', lang) : getText('hideAction', lang)}
+          </button>
+        )}
+
+        {/* Delete */}
+        <button
+          onClick={handleDelete}
+          className="context-menu-item danger flex items-center gap-2 w-full px-3 py-2 text-sm"
+        >
+          <Trash2 className="w-4 h-4" />
+          {editMode === 'group' ? getText('removeFromGroup', lang) : getText('deleteAction', lang)}
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -153,14 +241,27 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
         onMouseLeave={handleMouseLeave}
         className={cn(
           'bookmark-card flex flex-col items-center p-3 w-full relative',
-          bookmark.hidden && !isRevealMode && 'hidden-card opacity-40 pointer-events-none',
-          isEditMode && 'ring-2 ring-blue-400 ring-offset-1'
+          cardOpacity,
+          editMode !== 'none' && 'ring-2 ring-blue-400 ring-offset-1 cursor-pointer',
+          editMode === 'none' && !isDeleted && 'hover:scale-105 transition-transform'
         )}
       >
-        {/* Lock Indicator */}
-        {bookmark.hidden && isRevealMode && (
-          <div className="lock-indicator">
-            <Lock className="w-3 h-3 text-white" />
+        {/* Status Badges */}
+        {(isGloballyDeleted || isGroupDeleted) && (
+          <div className="absolute top-1 right-1 z-10">
+            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-red-500 text-white rounded">
+              {getText('deletedBadge', lang)}
+            </span>
+          </div>
+        )}
+        {isGloballyHidden && !isGloballyDeleted && (
+          <div className="absolute top-1 right-1 z-10">
+            <Lock className="w-3 h-3 text-gray-400" />
+          </div>
+        )}
+        {isGroupHidden && !isGloballyHidden && !isGroupDeleted && (
+          <div className="absolute top-1 right-1 z-10">
+            <EyeOff className="w-3 h-3 text-amber-400" />
           </div>
         )}
 
@@ -170,7 +271,7 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
             className={cn(
               'absolute inset-0 rounded-2xl blur-md opacity-0 transition-opacity duration-300 bg-gradient-to-br',
               iconStyle.bg,
-              isHovered && 'opacity-50'
+              isHovered && editMode === 'none' && 'opacity-50'
             )}
           />
 
@@ -180,11 +281,11 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
               'bg-gradient-to-br shadow-lg',
               iconStyle.bg,
               iconStyle.border,
-              isHovered && 'scale-110 shadow-xl'
+              isHovered && editMode === 'none' && 'scale-110 shadow-xl'
             )}
             style={{
-              boxShadow: isHovered
-                ? `0 8px 24px var(--tw-shadow-color, rgba(0,0,0,0.15))`
+              boxShadow: isHovered && editMode === 'none'
+                ? `0 8px 24px rgba(0,0,0,0.15)`
                 : '0 2px 8px rgba(0,0,0,0.1)',
             }}
           >
@@ -199,6 +300,7 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
               {iconLetter}
             </span>
 
+            {/* Region Indicator */}
             <div
               className={cn(
                 'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white',
@@ -219,8 +321,11 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
         </span>
       </button>
 
-      {/* Tooltip */}
-      {showTooltip && description && (
+      {/* Edit Actions */}
+      {editMode !== 'none' && !isDeleted && renderEditActions()}
+
+      {/* Tooltip (only in non-edit mode) */}
+      {showTooltip && description && editMode === 'none' && (
         <div
           ref={tooltipRef}
           className="tooltip-dark fixed z-50 p-4 max-w-[260px] pointer-events-none"
@@ -233,7 +338,6 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
             {getDomain(bookmark.url)}
           </div>
           <div className="h-px bg-gray-700/30 my-3" />
-          {/* 根据语言显示对应介绍 - 只显示当前语言的介绍 */}
           {lang === 'zh' && description.zh && (
             <div className="text-sm text-white leading-relaxed border-l-2 border-emerald-500 pl-3">
               {description.zh}
@@ -258,28 +362,6 @@ function BookmarkCardInner({ bookmark, forceLang }: BookmarkCardProps) {
           </div>
         </div>
       )}
-
-      {/* Context Menu for Edit Mode */}
-      {isEditMode && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 context-menu z-10 min-w-[120px]">
-          <button
-            onClick={() => updateBookmark(bookmark.id, { hidden: !bookmark.hidden })}
-            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-600"
-          >
-            <Lock className="w-4 h-4" />
-            {bookmark.hidden ? getText('show', lang) : getText('hide', lang)}
-          </button>
-          <button
-            onClick={() => deleteBookmark(bookmark.id)}
-            className="context-menu-item danger flex items-center gap-2 w-full px-3 py-2 text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            {getText('delete', lang)}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -289,8 +371,7 @@ const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.bookmark.title === next.bookmark.title &&
     prev.bookmark.url === next.bookmark.url &&
-    prev.bookmark.hidden === next.bookmark.hidden &&
-    prev.forceLang === next.forceLang;
+    prev.groupId === next.groupId;
 });
 
 export default BookmarkCard;

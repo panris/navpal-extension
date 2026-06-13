@@ -61,8 +61,9 @@ const UI_TEXT = {
   unsupportedProtocol: { zh: '仅支持 http/https 链接', en: 'Only http/https supported' },
   invalidUrlFormat: { zh: '网址格式不正确', en: 'Invalid URL format' },
   addInProgress: { zh: '添加中...', en: 'Adding...' },
-  show: { zh: '显示', en: 'Show' },
-  hide: { zh: '隐藏', en: 'Hide' },
+  hideAction: { zh: '隐藏', en: 'Hide' },
+  showAction: { zh: '显示', en: 'Show' },
+  deleteAction: { zh: '删除', en: 'Delete' },
   chineseDesc: { zh: '中文介绍（可选）', en: 'Chinese description (optional)' },
   englishDesc: { zh: 'English description (optional)', en: 'English description (optional)' },
 
@@ -70,9 +71,26 @@ const UI_TEXT = {
   chinaService: { zh: '中国服务', en: 'China Service' },
   globalService: { zh: '全球服务', en: 'Global Service' },
 
-  // Bookmark Grid
+  // Bookmark Grid / Edit Modes
   noBookmarks: { zh: '暂无书签', en: 'No bookmarks yet' },
   addBookmarkHint: { zh: '按 E 键添加书签', en: 'Press E to add bookmarks' },
+  revealModeBtn: { zh: '全量模式', en: 'Reveal All' },
+  groupEditMode: { zh: '分组编辑', en: 'Group Edit' },
+  globalEditMode: { zh: '全局编辑', en: 'Global Edit' },
+  done: { zh: '完成', en: 'Done' },
+  hiddenBookmarks: { zh: '个隐藏书签', en: 'hidden bookmarks' },
+  noMatchFound: { zh: '未找到匹配的书签', en: 'No matching bookmarks' },
+  groupEditHint: { zh: '此模式下编辑仅影响当前分组', en: 'Edits only affect this group' },
+  globalEditHint: { zh: '此模式下编辑将影响所有分组', en: 'Edits affect all groups' },
+  switchToGlobalEdit: { zh: '全局操作请切换至「全量编辑」', en: 'Switch to All Edit for global operations' },
+
+  // Bookmark Actions
+  restore: { zh: '恢复', en: 'Restore' },
+  removeFromGroup: { zh: '从分组移除', en: 'Remove from Group' },
+  hideFromGroup: { zh: '在分组隐藏', en: 'Hide in Group' },
+  showInGroup: { zh: '在分组显示', en: 'Show in Group' },
+  deletedBadge: { zh: '已删除', en: 'Deleted' },
+  groupHiddenBadge: { zh: '组内隐藏', en: 'Hidden in Group' },
 
   // Secret Modal
   enterSecret: { zh: '输入暗号', en: 'Enter Secret Code' },

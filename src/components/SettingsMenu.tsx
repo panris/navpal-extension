@@ -304,7 +304,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                         <button
                           onClick={() => handleDeleteGroup(group.id)}
                           className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
-                          title={getText('delete', lang)}
+                          title={getText('deleteAction', lang)}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

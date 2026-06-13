@@ -1,7 +1,6 @@
-import { useAppStore, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import { useAppStore, isBookmarkVisibleInGroup, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { useCurrentLang, getText } from '@/utils/i18n';
-import type { LangPref } from '@/components/BookmarkCard';
 
 // Group icons and bilingual names
 const groupMeta: Record<string, { icon: string; name: { zh: string; en: string } }> = {
@@ -23,7 +22,7 @@ function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): b
 export default function GroupTabs() {
   const activeGroupId = useAppStore((state) => state.activeGroupId);
   const setActiveGroup = useAppStore((state) => state.setActiveGroup);
-  const isEditMode = useAppStore((state) => state.isEditMode);
+  const editMode = useAppStore((state) => state.editMode);
   const isRevealMode = useAppStore((state) => state.isRevealMode);
   const groups = useAppStore((state) => state.groups);
   const bookmarks = useAppStore((state) => state.bookmarks);
@@ -33,7 +32,9 @@ export default function GroupTabs() {
   const getGroupCount = (groupId: string) => {
     return bookmarks.filter((b) => {
       if (b.groupId !== groupId) return false;
-      if (b.hidden && !isRevealMode) return false;
+      // Check visibility
+      if (!isBookmarkVisibleInGroup(b, groupId, isRevealMode)) return false;
+      // Language filter
       if (!isBookmarkVisible(b.region, lang)) return false;
       return true;
     }).length;
@@ -41,7 +42,9 @@ export default function GroupTabs() {
 
   // Calculate total visible count
   const totalCount = bookmarks.filter((b) => {
-    if (b.hidden && !isRevealMode) return false;
+    // Check visibility
+    if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
+    // Language filter
     if (!isBookmarkVisible(b.region, lang)) return false;
     return true;
   }).length;
@@ -102,9 +105,12 @@ export default function GroupTabs() {
         })}
 
         {/* Edit Mode Indicator */}
-        {isEditMode && (
-          <span className="px-3 py-1.5 text-xs font-semibold text-orange-600 bg-orange-50 rounded-full">
-            {getText('editing', lang)}
+        {editMode !== 'none' && (
+          <span className={cn(
+            'px-3 py-1.5 text-xs font-semibold rounded-full',
+            editMode === 'group' ? 'text-blue-600 bg-blue-50' : 'text-violet-600 bg-violet-50'
+          )}>
+            {editMode === 'group' ? getText('groupEditMode', lang) : getText('globalEditMode', lang)}
           </span>
         )}
       </div>

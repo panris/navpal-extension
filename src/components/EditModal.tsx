@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { X, Plus, AlertCircle, Pencil } from 'lucide-react';
+import { X, Plus, AlertCircle, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { normalizeUrl, autoDetectRegion, isValidUrl } from '@/utils';
+import { normalizeUrl, autoDetectRegion } from '@/utils';
 import { ICON_GRADIENTS } from './BookmarkCard';
 import { useCurrentLang, getText } from '@/utils/i18n';
+import type { EditMode } from '@/types';
 
 // Color gradients for icons
 function getGradientClass(id: string): string {
@@ -42,6 +43,8 @@ interface EditableBookmark {
   title: string;
   url: string;
   description?: { en: string; zh: string };
+  hidden: boolean;
+  deletedAt?: number | null;
 }
 
 function BookmarkItem({ bookmark, onSave, onCancel, lang }: {
@@ -106,7 +109,7 @@ function BookmarkItem({ bookmark, onSave, onCancel, lang }: {
         </button>
         <button
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
         >
           {getText('cancel', lang)}
         </button>
@@ -116,25 +119,30 @@ function BookmarkItem({ bookmark, onSave, onCancel, lang }: {
 }
 
 export default function EditModal() {
-  const isEditMode = useAppStore((s) => s.isEditMode);
-  const toggleEditMode = useAppStore((s) => s.toggleEditMode);
+  const editMode = useAppStore((s) => s.editMode);
+  const setEditMode = useAppStore((s) => s.setEditMode);
   const addBookmark = useAppStore((s) => s.addBookmark);
-  const deleteBookmark = useAppStore((s) => s.deleteBookmark);
+  const deleteBookmarkGlobally = useAppStore((s) => s.deleteBookmarkGlobally);
+  const restoreBookmark = useAppStore((s) => s.restoreBookmark);
+  const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
+  const showBookmarkGlobally = useAppStore((s) => s.showBookmarkGlobally);
   const updateBookmark = useAppStore((s) => s.updateBookmark);
   const groups = useAppStore((s) => s.groups);
   const bookmarks = useAppStore((s) => s.bookmarks);
+  const activeGroupId = useAppStore((s) => s.activeGroupId);
   const lang = useCurrentLang();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newUrl, setNewUrl] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState(groups[0]?.id || '');
+  const [selectedGroup, setSelectedGroup] = useState(activeGroupId || groups[0]?.id || '');
   const [urlError, setUrlError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isEditMode) return null;
+  // Only show modal in edit modes
+  if (editMode === 'none') return null;
 
   const handleUrlChange = (value: string) => {
     setNewUrl(value);
@@ -185,10 +193,43 @@ export default function EditModal() {
     setUrlError('');
   };
 
+  const handleClose = () => {
+    setEditMode('none');
+  };
+
+  const handleHide = (bookmarkId: string) => {
+    hideBookmarkGlobally(bookmarkId);
+  };
+
+  const handleShow = (bookmarkId: string) => {
+    showBookmarkGlobally(bookmarkId);
+  };
+
+  const handleDelete = (bookmarkId: string) => {
+    deleteBookmarkGlobally(bookmarkId);
+  };
+
+  const handleRestore = (bookmarkId: string) => {
+    restoreBookmark(bookmarkId);
+  };
+
+  // Filter bookmarks based on mode
+  const visibleBookmarks = bookmarks.filter((b) => {
+    if (editMode === 'global') {
+      // Show all in global mode
+      return true;
+    }
+    if (editMode === 'group' && activeGroupId) {
+      // Show bookmarks in current group
+      return b.groupId === activeGroupId;
+    }
+    return true;
+  });
+
   return (
     <div
       className="fixed inset-0 modal-overlay flex items-center justify-center z-50"
-      onClick={toggleEditMode}
+      onClick={handleClose}
     >
       <div
         className="modal-content w-[340px] max-h-[85vh] flex flex-col overflow-hidden"
@@ -199,10 +240,12 @@ export default function EditModal() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold">{getText('editBookmarks', lang)}</h2>
-              <p className="text-xs opacity-80 mt-0.5">{getText('addHideDelete', lang)}</p>
+              <p className="text-xs opacity-80 mt-0.5">
+                {editMode === 'group' ? getText('groupEditHint', lang) : getText('globalEditHint', lang)}
+              </p>
             </div>
             <button
-              onClick={toggleEditMode}
+              onClick={handleClose}
               className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -249,17 +292,23 @@ export default function EditModal() {
                   {urlError}
                 </p>
               )}
-              <select
-                value={selectedGroup}
-                onChange={(e) => setSelectedGroup(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
-              >
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
+              {editMode === 'group' ? (
+                <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                  {groups.find((g) => g.id === activeGroupId)?.name || ''}
+                </div>
+              ) : (
+                <select
+                  value={selectedGroup}
+                  onChange={(e) => setSelectedGroup(e.target.value)}
+                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+                >
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="flex gap-3">
                 <button
                   onClick={handleAddBookmark}
@@ -288,58 +337,83 @@ export default function EditModal() {
 
           {/* Bookmark List */}
           <div className="space-y-2">
-            {bookmarks.map((bookmark) => (
-              <div
-                key={bookmark.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                {/* Icon */}
+            {visibleBookmarks.map((bookmark) => {
+              const isDeleted = bookmark.deletedAt !== null && bookmark.deletedAt !== undefined;
+              const isHidden = bookmark.hidden;
+
+              return (
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0 ${getGradientClass(bookmark.id)}`}
+                  key={bookmark.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                    isDeleted ? 'bg-red-50 opacity-60' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
                 >
-                  {truncate(bookmark.title, 1)}
-                </div>
-
-                {/* Info - truncate long text */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate" title={bookmark.title}>
-                    {truncate(bookmark.title, 20)}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate" title={bookmark.url}>
-                    {truncate(bookmark.url.replace('https://', '').replace('http://', ''), 30)}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => updateBookmark(bookmark.id, { hidden: !bookmark.hidden })}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 hover:bg-amber-100 transition-colors"
-                    title={bookmark.hidden ? getText('show', lang) : getText('hide', lang)}
+                  {/* Icon */}
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0 ${getGradientClass(bookmark.id)}`}
                   >
-                    {bookmark.hidden ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242" />
-                      </svg>
+                    {truncate(bookmark.title, 1)}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate" title={bookmark.title}>
+                      {truncate(bookmark.title, 20)}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate" title={bookmark.url}>
+                      {truncate(bookmark.url.replace('https://', '').replace('http://', ''), 30)}
+                    </div>
+                    {/* Status badges */}
+                    {isDeleted && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-red-600 font-medium">
+                        <Trash2 className="w-3 h-3" />
+                        {getText('deletedBadge', lang)}
+                      </span>
                     )}
-                  </button>
-                  <button
-                    onClick={() => deleteBookmark(bookmark.id)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-100 transition-colors"
-                    title={getText('delete', lang)}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                    {isHidden && !isDeleted && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium">
+                        <span>🔒</span>
+                        {getText('hideAction', lang)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Restore (for deleted) or Show (for hidden) */}
+                    {(isDeleted || isHidden) ? (
+                      <button
+                        onClick={() => isDeleted ? handleRestore(bookmark.id) : handleShow(bookmark.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-100 transition-colors"
+                        title={isDeleted ? getText('restore', lang) : getText('show', lang)}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleHide(bookmark.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 hover:bg-amber-100 transition-colors"
+                        title={getText('hideAction', lang)}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242" />
+                        </svg>
+                      </button>
+                    )}
+                    {/* Delete (only in global mode) */}
+                    {editMode === 'global' && !isDeleted && (
+                      <button
+                        onClick={() => handleDelete(bookmark.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-100 transition-colors"
+                        title={getText('deleteAction', lang)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

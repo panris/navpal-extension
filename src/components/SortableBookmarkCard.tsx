@@ -6,10 +6,11 @@ import { cn } from '@/utils/cn';
 
 interface SortableBookmarkCardProps {
   bookmark: Bookmark;
+  groupId: string;
   isDragging: boolean;
 }
 
-export default function SortableBookmarkCard({ bookmark, isDragging }: SortableBookmarkCardProps) {
+export default function SortableBookmarkCard({ bookmark, groupId, isDragging }: SortableBookmarkCardProps) {
   const {
     attributes,
     listeners,
@@ -36,7 +37,7 @@ export default function SortableBookmarkCard({ bookmark, isDragging }: SortableB
         !isSortableDragging && isDragging && 'cursor-grabbing'
       )}
     >
-      <BookmarkCard bookmark={bookmark} />
+      <BookmarkCard bookmark={bookmark} groupId={groupId} />
     </div>
   );
 }
