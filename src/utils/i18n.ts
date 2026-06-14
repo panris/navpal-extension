@@ -101,6 +101,12 @@ const UI_TEXT = {
   // Region labels
   regionCN: { zh: '🇨🇳', en: '🇨🇳' },
   regionGlobal: { zh: '🌍', en: '🌍' },
+
+  // Context menu
+  copyUrl: { zh: '复制网址', en: 'Copy URL' },
+  openInNewTab: { zh: '在新标签页打开', en: 'Open in New Tab' },
+  moveTo: { zh: '移动到', en: 'Move to' },
+  hideBookmark: { zh: '隐藏书签', en: 'Hide Bookmark' },
 } as const;
 
 // ─── 类型定义 ─────────────────────────────────────────────────

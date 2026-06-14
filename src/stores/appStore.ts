@@ -90,6 +90,7 @@ export const useAppStore = create<
 
       // 编辑模式切换
       setEditMode: (mode: EditMode) => set({ editMode: mode }),
+      toggleEditMode: () => set((state) => ({ editMode: state.editMode === 'none' ? 'group' : 'none' })),
 
       // 分组操作
       addGroup: (name, icon) => {

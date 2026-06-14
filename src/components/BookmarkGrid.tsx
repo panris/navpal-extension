@@ -204,19 +204,25 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   // Batch actions
   const handleBatchDelete = () => {
-    selectedIds.forEach((id) => deleteBookmarkGlobally(id));
+    const { deleteBookmarkGlobally } = useAppStore.getState();
+    const ids = Array.from(selectedIds);
+    ids.forEach((id) => deleteBookmarkGlobally(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
   };
 
   const handleBatchHide = () => {
-    selectedIds.forEach((id) => hideBookmarkGlobally(id));
+    const { hideBookmarkGlobally } = useAppStore.getState();
+    const ids = Array.from(selectedIds);
+    ids.forEach((id) => hideBookmarkGlobally(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
   };
 
   const handleBatchMove = (targetGroupId: string) => {
-    selectedIds.forEach((id) => moveBookmark(id, targetGroupId));
+    const { moveBookmark } = useAppStore.getState();
+    const ids = Array.from(selectedIds);
+    ids.forEach((id) => moveBookmark(id, targetGroupId));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
   };

@@ -92,6 +92,7 @@ export interface AppState {
 
   // 编辑模式切换
   setEditMode: (mode: EditMode) => void;
+  toggleEditMode: () => void;
 
   // 分组操作
   addGroup: (name: string, icon?: string) => void;
