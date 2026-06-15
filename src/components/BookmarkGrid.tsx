@@ -467,7 +467,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
       {/* Content */}
       {sortedBookmarks.length === 0 && !searchQuery ? (
-        <EmptyState lang={lang} onAdd={() => {}} mode={editMode} />
+        <EmptyState lang={lang} onAdd={() => setEditMode(activeGroupId ? 'group' : 'global')} mode={editMode} />
       ) : sortedBookmarks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-gray-400">
           <div className="text-4xl mb-2">🔍</div>
