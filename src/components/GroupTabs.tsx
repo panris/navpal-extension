@@ -1,4 +1,4 @@
-import { useAppStore, isBookmarkVisibleInGroup, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { useCurrentLang, getText } from '@/utils/i18n';
 

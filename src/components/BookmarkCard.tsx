@@ -76,12 +76,11 @@ function getDomain(url: string): string {
 interface BookmarkCardProps {
   bookmark: Bookmark;
   groupId: string;
-  forceLang?: 'zh' | 'en';
   isKeyboardSelected?: boolean;
   isSelected?: boolean;
 }
 
-function BookmarkCardInner({ bookmark, groupId, forceLang, isKeyboardSelected, isSelected }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);

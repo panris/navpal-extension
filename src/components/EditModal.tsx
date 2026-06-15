@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react';
-import { X, Plus, AlertCircle, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { X, Plus, AlertCircle, RotateCcw, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { normalizeUrl, autoDetectRegion } from '@/utils';
 import { ICON_GRADIENTS } from './BookmarkCard';
 import { useCurrentLang, getText } from '@/utils/i18n';
-import type { EditMode } from '@/types';
 
 // Color gradients for icons
 function getGradientClass(id: string): string {
@@ -126,7 +125,6 @@ export default function EditModal() {
   const restoreBookmark = useAppStore((s) => s.restoreBookmark);
   const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
   const showBookmarkGlobally = useAppStore((s) => s.showBookmarkGlobally);
-  const updateBookmark = useAppStore((s) => s.updateBookmark);
   const groups = useAppStore((s) => s.groups);
   const bookmarks = useAppStore((s) => s.bookmarks);
   const activeGroupId = useAppStore((s) => s.activeGroupId);

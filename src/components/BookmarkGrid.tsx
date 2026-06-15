@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -15,29 +15,11 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Bookmark } from '@/types';
-import { useAppStore, isBookmarkVisibleInGroup, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
 import SortableBookmarkCard from './SortableBookmarkCard';
-import { Eye, Edit3, Copy, ExternalLink, ChevronRight, Trash2, EyeOff, ArrowLeft, UserX } from 'lucide-react';
+import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
-import type { LangPref } from '@/components/BookmarkCard';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
-
-// Get current effective language
-function useCurrentLang(): 'zh' | 'en' {
-  const [lang, setLang] = useState<'zh' | 'en'>(() => {
-    const pref = useAppStore.getState().langPref;
-    return getEffectiveLang(pref as LangPref);
-  });
-
-  useEffect(() => {
-    const unsubscribe = subscribeLang((newLang) => {
-      setLang(newLang);
-    });
-    return unsubscribe;
-  }, []);
-
-  return lang;
-}
 
 // Check if bookmark should be visible based on language
 function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
@@ -120,7 +102,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const bookmarksState = useAppStore((s) => s.bookmarks);
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks);
 
-  const filteredBookmarks = bookmarks.filter((b) => {
+  const filteredBookmarks = useMemo(() => bookmarks.filter((b) => {
     if (!isBookmarkVisible(b.region, lang)) return false;
     if (editMode === 'group' && activeGroupId) {
       if (b.groupId !== activeGroupId) return false;
@@ -140,9 +122,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       if (!matchTitle && !matchUrl && !matchDescZh && !matchDescEn) return false;
     }
     return true;
-  });
+  }), [bookmarks, lang, editMode, activeGroupId, isRevealMode, searchQuery]);
 
-  const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
+  const sortedBookmarks = useMemo(() => [...filteredBookmarks].sort((a, b) => a.order - b.order), [filteredBookmarks]);
   const bookmarkIds = sortedBookmarks.map((b) => b.id);
 
   // ── Keyboard navigation ─────────────────────────────────────────
@@ -301,31 +283,6 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     const newOrder = arrayMove(bookmarkIds, oldIndex, newIndex);
     reorderBookmarks(targetGroupId, newOrder);
   };
-
-  const handleRevealRequest = () => {
-    const event = new CustomEvent('navpal:reveal-request');
-    window.dispatchEvent(event);
-  };
-
-  // Edit mode handlers
-  const handleExitEditMode = () => {
-    setEditMode('none');
-  };
-
-  const handleEnterGroupEdit = () => {
-    if (activeGroupId) {
-      setEditMode('group');
-    }
-  };
-
-  const handleEnterGlobalEdit = () => {
-    setEditMode('global');
-  };
-
-  // Check if group edit is available (needs active group)
-  const canEnterGroupEdit = activeGroupId !== null;
-  const isInGroupEdit = editMode === 'group';
-  const isInGlobalEdit = editMode === 'global';
 
   return (
     <div>

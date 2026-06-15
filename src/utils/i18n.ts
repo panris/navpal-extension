@@ -105,8 +105,15 @@ const UI_TEXT = {
   // Context menu
   copyUrl: { zh: '复制网址', en: 'Copy URL' },
   openInNewTab: { zh: '在新标签页打开', en: 'Open in New Tab' },
+  openInNewTabShort: { zh: '新标签页打开', en: 'Open in new tab' },
+  copyLink: { zh: '复制链接', en: 'Copy link' },
   moveTo: { zh: '移动到', en: 'Move to' },
+  moveToGroup: { zh: '移动到分组', en: 'Move to group' },
   hideBookmark: { zh: '隐藏书签', en: 'Hide Bookmark' },
+  hide: { zh: '隐藏', en: 'Hide' },
+  restore: { zh: '恢复', en: 'Restore' },
+  show: { zh: '显示', en: 'Show' },
+  deleteAction: { zh: '删除', en: 'Delete' },
 } as const;
 
 // ─── 类型定义 ─────────────────────────────────────────────────

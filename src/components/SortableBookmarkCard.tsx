@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types';
@@ -15,7 +16,7 @@ interface SortableBookmarkCardProps {
   onContextMenu?: (e: React.MouseEvent, bookmarkId: string) => void;
 }
 
-export default function SortableBookmarkCard({
+function SortableBookmarkCardInner({
   bookmark,
   groupId,
   isDragging,
@@ -59,3 +60,5 @@ export default function SortableBookmarkCard({
     </div>
   );
 }
+
+export default memo(SortableBookmarkCardInner);
