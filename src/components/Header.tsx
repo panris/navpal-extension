@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { Search, Compass } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import SettingsMenu from './SettingsMenu';
@@ -16,31 +16,17 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
   const isRevealMode = useAppStore((state) => state.isRevealMode);
   const lang = useCurrentLang();
   const searchRef = useRef<HTMLInputElement>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Debounced search
-  const handleSearchChange = useCallback((value: string) => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      setSearchQuery(value);
-    }, 200);
-  }, [setSearchQuery]);
 
   // Expose search focus for keyboard shortcut
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       if ((e as any).detail?.focus === 'search') {
         searchRef.current?.focus();
+        searchRef.current?.select();
       }
     };
     window.addEventListener('navpal:focus', handler);
     return () => window.removeEventListener('navpal:focus', handler);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
   }, []);
 
   return (
@@ -76,15 +62,24 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
 
       {/* Search */}
       <div data-tour="search" className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
         <input
           ref={searchRef}
           type="text"
           placeholder={getText('searchPlaceholder', lang)}
-          defaultValue={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 text-sm search-glass rounded-xl placeholder-white/60"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-10 py-2.5 text-sm search-glass rounded-xl placeholder-white/60"
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-white/30 text-white/80 hover:bg-white/50 hover:text-white transition-colors"
+            tabIndex={-1}
+          >
+            <span className="text-xs font-bold leading-none">×</span>
+          </button>
+        )}
       </div>
     </div>
   );
