@@ -142,6 +142,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
     <div className="relative" ref={menuRef}>
       {/* Settings Button */}
       <button
+        data-tour="settings"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'w-9 h-9 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 text-white transition-all hover:bg-white/25',

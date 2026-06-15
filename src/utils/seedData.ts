@@ -363,4 +363,5 @@ export const DEFAULT_SETTINGS = {
   showRegionLabels: true,
   compactMode: false,
   storageQuota: 100,
+  hasSeenOnboarding: false,
 };

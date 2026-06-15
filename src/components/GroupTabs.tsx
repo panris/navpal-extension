@@ -55,7 +55,7 @@ export default function GroupTabs() {
   return (
     <div className="bg-white border-b border-gray-100">
       {/* All Tab */}
-      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+      <div data-tour="groups" className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
         <button
           onClick={() => setActiveGroup(null)}
           className={cn(

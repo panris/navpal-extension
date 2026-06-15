@@ -8,6 +8,7 @@ import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ResizeHandle from '@/components/ResizeHandle';
+import OnboardingTour from '@/components/OnboardingTour';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import { useResizable } from '@/hooks/useResizable';
 
@@ -184,7 +185,7 @@ export default function App() {
           </ErrorBoundary>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto p-4">
+          <main data-tour="edit" className="flex-1 overflow-y-auto p-4">
             <ErrorBoundary>
               <BookmarkGrid bookmarks={filteredBookmarks} />
             </ErrorBoundary>
@@ -198,6 +199,9 @@ export default function App() {
       {/* Modals */}
       <ErrorBoundary><EditModal /></ErrorBoundary>
       <ErrorBoundary><SecretModal /></ErrorBoundary>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour />
 
       {/* Home Indicator */}
       {viewMode !== 'minimized' && <div className="home-indicator" />}

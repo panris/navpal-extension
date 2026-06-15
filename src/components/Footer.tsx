@@ -11,7 +11,7 @@ export default function Footer() {
   const hiddenCount = bookmarks.filter((b) => b.hidden).length;
 
   return (
-    <footer className="bg-white border-t border-gray-100 px-4 py-3">
+    <footer data-tour="reveal" className="bg-white border-t border-gray-100 px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Left: Status */}
         <div className="flex items-center gap-3">
