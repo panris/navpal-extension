@@ -465,6 +465,14 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
                   dataCardIndex={index}
                   dataCardId={bookmark.id}
                   onContextMenu={handleContextMenu}
+                  onToggleSelect={() => {
+                    setSelectedIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(bookmark.id)) next.delete(bookmark.id);
+                      else next.add(bookmark.id);
+                      return next;
+                    });
+                  }}
                 />
               ))}
             </div>

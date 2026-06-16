@@ -78,9 +78,10 @@ interface BookmarkCardProps {
   groupId: string;
   isKeyboardSelected?: boolean;
   isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected, onToggleSelect }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -114,10 +115,16 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
   // Card opacity based on state
   const cardOpacity = isGloballyDeleted || isGroupDeleted ? 'opacity-40' : '';
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (editMode !== 'none') return;
+    // Ctrl/Cmd + click to toggle selection
+    if ((e.ctrlKey || e.metaKey) && onToggleSelect) {
+      e.preventDefault();
+      onToggleSelect();
+      return;
+    }
     openBookmark(bookmark.id);
-  }, [editMode, bookmark.id, openBookmark]);
+  }, [editMode, bookmark.id, openBookmark, onToggleSelect]);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
@@ -242,7 +249,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
   };
 
   return (
-    <div className="relative" onMouseMove={handleMouseMove}>
+    <div className="relative group/bookmark" onMouseMove={handleMouseMove}>
       <button
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
@@ -255,6 +262,30 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
           isFocused && 'ring-2 ring-violet-400 ring-offset-2'
         )}
       >
+        {/* Selection checkbox — visible on hover when not in edit mode */}
+        {editMode === 'none' && !isDeleted && (
+          <div
+            className="absolute top-1 right-1 z-10 opacity-0 group-hover/bookmark:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onToggleSelect?.();
+            }}
+          >
+            <div className={cn(
+              'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
+              isSelected
+                ? 'bg-violet-500 border-violet-500'
+                : 'bg-white border-gray-300 hover:border-violet-400'
+            )}>
+              {isSelected && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+        )}
         {/* Status Badges */}
         {(isGloballyDeleted || isGroupDeleted) && (
           <div className="absolute top-1 right-1 z-10">

@@ -14,6 +14,7 @@ interface SortableBookmarkCardProps {
   isSelected?: boolean;
   dataCardId?: string;
   onContextMenu?: (e: React.MouseEvent, bookmarkId: string) => void;
+  onToggleSelect?: () => void;
 }
 
 function SortableBookmarkCardInner({
@@ -25,6 +26,7 @@ function SortableBookmarkCardInner({
   isSelected,
   dataCardId,
   onContextMenu,
+  onToggleSelect,
 }: SortableBookmarkCardProps) {
   const {
     attributes,
@@ -56,7 +58,7 @@ function SortableBookmarkCardInner({
       data-card-id={dataCardId}
       onContextMenu={onContextMenu ? (e) => onContextMenu(e, bookmark.id) : undefined}
     >
-      <BookmarkCard bookmark={bookmark} groupId={groupId} isKeyboardSelected={isKeyboardSelected || isSelected} />
+      <BookmarkCard bookmark={bookmark} groupId={groupId} isKeyboardSelected={isKeyboardSelected || isSelected} onToggleSelect={onToggleSelect} />
     </div>
   );
 }
