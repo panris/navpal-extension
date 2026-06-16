@@ -241,15 +241,19 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   const handleContextDelete = () => {
     if (!contextMenu) return;
-    console.log('[NavPal] handleContextDelete, bookmarkId:', contextMenu.bookmarkId);
-    useAppStore.getState().hardDeleteBookmark(contextMenu.bookmarkId);
+    const bookmarkId = contextMenu.bookmarkId;
     setContextMenu(null);
+    // 用 setTimeout 确保状态更新在下一个周期执行
+    setTimeout(() => {
+      useAppStore.getState().hardDeleteBookmark(bookmarkId);
+    }, 0);
   };
 
   const handleContextHide = () => {
     if (!contextMenu) return;
     hideBookmarkGlobally(contextMenu.bookmarkId);
-    setContextMenu(null);
+    // 延迟关闭菜单，让状态更新先完成
+    setTimeout(() => setContextMenu(null), 0);
   };
 
   const sensors = useSensors(

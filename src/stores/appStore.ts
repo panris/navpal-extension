@@ -250,16 +250,9 @@ export const useAppStore = create<
 
       // 彻底删除书签（不可恢复）
       hardDeleteBookmark: (id) => {
-        console.log('[NavPal] hardDeleteBookmark called, id:', id);
-        const current = get().bookmarks;
-        console.log('[NavPal] Before delete, bookmarks count:', current.length);
         set((state) => ({
-          bookmarks: state.bookmarks.filter((b) => {
-            console.log('[NavPal] Checking bookmark:', b.id, '===', id, ':', b.id === id);
-            return b.id !== id;
-          }),
+          bookmarks: state.bookmarks.filter((b) => b.id !== id),
         }));
-        console.log('[NavPal] After delete, bookmarks count:', get().bookmarks.length);
       },
 
       // 记录访问时间（最近使用排序用）
