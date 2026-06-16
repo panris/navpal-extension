@@ -343,57 +343,64 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         </div>
       )}
 
-      {/* Quick Remove Bar */}
-      <div className="mb-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 font-medium">
-            {lang === 'zh' ? '快速移除' : 'Quick Remove'}
-          </span>
-          <div className="ml-auto flex gap-1.5">
-            {/* Remove from group */}
-            <button
-              onClick={() => {
-                selectedIds.forEach((id) => {
-                  const bookmark = bookmarksState.find((b) => b.id === id);
-                  if (bookmark && activeGroupId) {
-                    deleteBookmarkFromGroup(id, activeGroupId);
-                  }
-                });
-                setSelectedIds(new Set());
-              }}
-              className="px-3 py-1 text-xs font-medium bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
-              title={lang === 'zh' ? '移出当前分组' : 'Remove from current group'}
-            >
-              <ArrowLeft className="w-3 h-3" />
-              {lang === 'zh' ? '移出分组' : 'From Group'}
-            </button>
-            {/* Remove from all groups */}
-            <button
-              onClick={() => {
-                selectedIds.forEach((id) => hideBookmarkGlobally(id));
-                setSelectedIds(new Set());
-              }}
-              className="px-3 py-1 text-xs font-medium bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1"
-              title={lang === 'zh' ? '从所有分组移除（隐藏）' : 'Remove from all groups (hide)'}
-            >
-              <EyeOff className="w-3 h-3" />
-              {lang === 'zh' ? '全部隐藏' : 'Hide All'}
-            </button>
-            {/* Delete completely */}
-            <button
-              onClick={() => {
-                selectedIds.forEach((id) => deleteBookmarkGlobally(id));
-                setSelectedIds(new Set());
-              }}
-              className="px-3 py-1 text-xs font-medium bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
-              title={lang === 'zh' ? '彻底删除' : 'Delete permanently'}
-            >
-              <Trash2 className="w-3 h-3" />
-              {lang === 'zh' ? '彻底删除' : 'Delete'}
-            </button>
+      {/* Quick Remove Bar — only visible when selection is active and keyboard selection is enabled */}
+      {editMode === 'none' && !searchQuery && selectedIds.size > 0 && (
+        <div className="mb-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">
+              {lang === 'zh' ? '快速移除' : 'Quick Remove'}
+            </span>
+            <div className="ml-auto flex gap-1.5">
+              {/* Remove from group — disabled when no active group */}
+              <button
+                onClick={() => {
+                  selectedIds.forEach((id) => {
+                    const bookmark = bookmarksState.find((b) => b.id === id);
+                    if (bookmark && activeGroupId) {
+                      deleteBookmarkFromGroup(id, activeGroupId);
+                    }
+                  });
+                  setSelectedIds(new Set());
+                }}
+                className={`px-3 py-1 text-xs font-medium bg-white border rounded-lg transition-colors flex items-center gap-1 ${!activeGroupId ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                title={
+                  !activeGroupId
+                    ? (lang === 'zh' ? '没有激活的分组' : 'No active group')
+                    : (lang === 'zh' ? '移出当前分组' : 'Remove from current group')
+                }
+                disabled={!activeGroupId}
+              >
+                <ArrowLeft className="w-3 h-3" />
+                {lang === 'zh' ? '移出分组' : 'From Group'}
+              </button>
+              {/* Remove from all groups */}
+              <button
+                onClick={() => {
+                  selectedIds.forEach((id) => hideBookmarkGlobally(id));
+                  setSelectedIds(new Set());
+                }}
+                className="px-3 py-1 text-xs font-medium bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1"
+                title={lang === 'zh' ? '从所有分组移除（隐藏）' : 'Remove from all groups (hide)'}
+              >
+                <EyeOff className="w-3 h-3" />
+                {lang === 'zh' ? '全部隐藏' : 'Hide All'}
+              </button>
+              {/* Delete completely */}
+              <button
+                onClick={() => {
+                  selectedIds.forEach((id) => deleteBookmarkGlobally(id));
+                  setSelectedIds(new Set());
+                }}
+                className="px-3 py-1 text-xs font-medium bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
+                title={lang === 'zh' ? '彻底删除' : 'Delete permanently'}
+              >
+                <Trash2 className="w-3 h-3" />
+                {lang === 'zh' ? '彻底删除' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions - Hidden for release */}
       {/* <div className="flex gap-2 mb-4">

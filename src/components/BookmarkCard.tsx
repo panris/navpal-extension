@@ -164,6 +164,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
   // Action handlers based on edit mode
   const handleHide = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('[NavPal] handleHide called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       updateBookmark(bookmark.id, {
         groupHidden: { ...bookmark.groupHidden, [groupId]: true }
@@ -175,6 +176,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
 
   const handleShow = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('[NavPal] handleShow called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       const newGroupHidden = { ...bookmark.groupHidden };
       delete newGroupHidden[groupId];
@@ -186,6 +188,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('[NavPal] handleDelete called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       deleteBookmarkFromGroup(bookmark.id, groupId);
     } else if (editMode === 'global') {
@@ -195,6 +198,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected }
 
   const handleRestore = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('[NavPal] handleRestore called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'global') {
       restoreBookmark(bookmark.id);
     }
