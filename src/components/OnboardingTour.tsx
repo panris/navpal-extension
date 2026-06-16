@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/stores/appStore';
-import { useCurrentLang, getText } from '@/utils/i18n';
+import { useCurrentLang } from '@/utils/i18n';
 
 interface TourStep {
   key: string;
@@ -169,7 +169,6 @@ export default function OnboardingTour() {
   const lang = useCurrentLang();
   const hasSeenOnboarding = useAppStore((s) => s.settings.hasSeenOnboarding);
   const updateSettings = useAppStore((s) => s.updateSettings);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Show only if hasn't seen onboarding yet
   if (hasSeenOnboarding) return null;

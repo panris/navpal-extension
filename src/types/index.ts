@@ -59,6 +59,9 @@ export interface AppSettings {
 
   // Schema 版本（用于数据迁移）
   schemaVersion: number;
+
+  // 引导教程
+  hasSeenOnboarding: boolean;
 }
 
 // 编辑模式类型

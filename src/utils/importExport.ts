@@ -55,7 +55,7 @@ export function validateImportData(raw: unknown): { valid: boolean; data?: Expor
   if (!validGroup) return { valid: false, error: 'groups 格式错误' };
   if (!validBookmark) return { valid: false, error: 'bookmarks 格式错误' };
 
-  return { valid: true, data: obj as ExportData };
+  return { valid: true, data: obj as unknown as ExportData };
 }
 
 /** 生成下载 */

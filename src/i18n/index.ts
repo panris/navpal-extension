@@ -109,9 +109,10 @@ export function t(key: I18nKey, lang: Lang): string {
 }
 
 // 通用翻译获取器
-export function getText<T extends Record<string, { zh: string; en: string }>>(
-  obj: T,
+export function getText(
+  obj: string | { zh: string; en: string },
   lang: Lang
 ): string {
+  if (typeof obj === 'string') return obj;
   return obj[lang] || obj.zh;
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Settings, Globe, Minus, Square, Maximize2, Plus, Trash2, Edit3, Upload, Download, ChevronRight, ChevronDown } from 'lucide-react';
+import { Settings, Plus, Trash2, Edit3, Upload, Download } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAppStore } from '@/stores/appStore';
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
@@ -36,7 +36,6 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
   const addGroup = useAppStore((s) => s.addGroup);
   const updateGroup = useAppStore((s) => s.updateGroup);
   const deleteGroup = useAppStore((s) => s.deleteGroup);
-  const reorderGroups = useAppStore((s) => s.reorderGroups);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
   const [groupEdit, setGroupEdit] = useState<GroupEditState | null>(null);

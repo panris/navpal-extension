@@ -2,6 +2,7 @@
 
 import { Group, Bookmark } from '@/types';
 import { generateId } from '@/utils';
+import { CURRENT_SCHEMA_VERSION } from '@/constants';
 
 // 辅助函数：为书签添加描述
 function withDescription(bookmark: Omit<Bookmark, 'id' | 'createdAt' | 'updatedAt'>, desc: { en: string; zh: string }): Bookmark {
@@ -363,5 +364,6 @@ export const DEFAULT_SETTINGS = {
   showRegionLabels: true,
   compactMode: false,
   storageQuota: 100,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   hasSeenOnboarding: false,
 };

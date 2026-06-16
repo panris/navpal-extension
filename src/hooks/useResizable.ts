@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAppStore } from '@/stores/appStore';
 
 interface ResizeOptions {
   minWidth?: number;
@@ -60,10 +59,6 @@ export function useResizable(options: ResizeOptions = {}) {
   } = options;
 
   const saved = loadSavedSize();
-  const viewMode = useAppStore((s) => {
-    // We only track this for the 'default' view mode
-    return 'default';
-  });
 
   const [size, setSize] = useState<ResizeState>({
     width: saved.width ?? initialWidth,

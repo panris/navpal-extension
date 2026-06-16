@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useAppStore, useVisibleGroups, useVisibleBookmarks, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import { useAppStore, useVisibleGroups, useVisibleBookmarks, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
 import BookmarkGrid from '@/components/BookmarkGrid';
@@ -176,7 +176,7 @@ export default function App() {
           <Header
             onMinimize={handleMinimize}
             onMaximize={handleMaximize}
-            isMinimized={viewMode === 'minimized'}
+            isMinimized={false}
           />
 
           {/* Group Tabs */}

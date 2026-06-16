@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Globe } from 'lucide-react';
-import { useAppStore, useVisibleGroups, useVisibleBookmarks, subscribeLang, getEffectiveLang } from '@/stores/appStore';
+import { useAppStore, useVisibleGroups, useVisibleBookmarks, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
 import BookmarkGrid from '@/components/BookmarkGrid';
@@ -9,8 +9,7 @@ import EditModal from '@/components/EditModal';
 import SecretModal from '@/components/SecretModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { cn } from '@/utils/cn';
-import { useCurrentLang, getText, LANG_OPTIONS } from '@/utils/i18n';
-import type { LangPref } from '@/components/BookmarkCard';
+import { useCurrentLang, LANG_OPTIONS } from '@/utils/i18n';
 
 function formatTime(): string {
   const now = new Date();

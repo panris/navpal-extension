@@ -102,7 +102,7 @@ const UI_TEXT = {
   regionCN: { zh: '🇨🇳', en: '🇨🇳' },
   regionGlobal: { zh: '🌍', en: '🌍' },
 
-  // Context menu
+  // Context menu / Bookmark grid
   copyUrl: { zh: '复制网址', en: 'Copy URL' },
   openInNewTab: { zh: '在新标签页打开', en: 'Open in New Tab' },
   openInNewTabShort: { zh: '新标签页打开', en: 'Open in new tab' },
@@ -111,9 +111,7 @@ const UI_TEXT = {
   moveToGroup: { zh: '移动到分组', en: 'Move to group' },
   hideBookmark: { zh: '隐藏书签', en: 'Hide Bookmark' },
   hide: { zh: '隐藏', en: 'Hide' },
-  restore: { zh: '恢复', en: 'Restore' },
   show: { zh: '显示', en: 'Show' },
-  deleteAction: { zh: '删除', en: 'Delete' },
 } as const;
 
 // ─── 类型定义 ─────────────────────────────────────────────────

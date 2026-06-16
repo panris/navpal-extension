@@ -19,8 +19,9 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
 
   // Expose search focus for keyboard shortcut
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      if ((e as any).detail?.focus === 'search') {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.focus === 'search') {
         searchRef.current?.focus();
         searchRef.current?.select();
       }
