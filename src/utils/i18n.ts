@@ -63,7 +63,7 @@ const UI_TEXT = {
   addInProgress: { zh: '添加中...', en: 'Adding...' },
   hideAction: { zh: '隐藏', en: 'Hide' },
   showAction: { zh: '显示', en: 'Show' },
-  deleteAction: { zh: '删除', en: 'Delete' },
+  deleteAction: { zh: '彻底删除', en: 'Delete Permanently' },
   chineseDesc: { zh: '中文介绍（可选）', en: 'Chinese description (optional)' },
   englishDesc: { zh: 'English description (optional)', en: 'English description (optional)' },
 

@@ -186,9 +186,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   // Batch actions
   const handleBatchDelete = () => {
-    const { deleteBookmarkGlobally } = useAppStore.getState();
+    const { hardDeleteBookmark } = useAppStore.getState();
     const ids = Array.from(selectedIds);
-    ids.forEach((id) => deleteBookmarkGlobally(id));
+    ids.forEach((id) => hardDeleteBookmark(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
   };
@@ -241,7 +241,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   const handleContextDelete = () => {
     if (!contextMenu) return;
-    deleteBookmarkGlobally(contextMenu.bookmarkId);
+    console.log('[NavPal] handleContextDelete, bookmarkId:', contextMenu.bookmarkId);
+    useAppStore.getState().hardDeleteBookmark(contextMenu.bookmarkId);
     setContextMenu(null);
   };
 
