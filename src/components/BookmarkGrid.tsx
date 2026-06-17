@@ -188,9 +188,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   // Batch actions
   const handleBatchDelete = () => {
-    const { hardDeleteBookmark } = useAppStore.getState();
     const ids = Array.from(selectedIds);
-    ids.forEach((id) => hardDeleteBookmark(id));
+    ids.forEach((id) => deleteBookmarkGlobally(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
   };
@@ -245,19 +244,14 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   const handleContextDelete = () => {
     if (!contextMenu) return;
-    const bookmarkId = contextMenu.bookmarkId;
+    deleteBookmarkGlobally(contextMenu.bookmarkId);
     setContextMenu(null);
-    // 用 setTimeout 确保状态更新在下一个周期执行
-    setTimeout(() => {
-      useAppStore.getState().hardDeleteBookmark(bookmarkId);
-    }, 0);
   };
 
   const handleContextHide = () => {
     if (!contextMenu) return;
     hideBookmarkGlobally(contextMenu.bookmarkId);
-    // 延迟关闭菜单，让状态更新先完成
-    setTimeout(() => setContextMenu(null), 0);
+    setContextMenu(null);
   };
 
   const sensors = useSensors(
