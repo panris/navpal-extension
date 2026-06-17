@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Plus, AlertCircle, RotateCcw, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { normalizeUrl, autoDetectRegion } from '@/utils';
@@ -57,6 +57,15 @@ export default function EditModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync selectedGroup with activeGroupId in group mode
+  // The component stays mounted even when returning null,
+  // so useState keeps the initial value forever without this.
+  useEffect(() => {
+    if (editMode === 'group' && activeGroupId) {
+      setSelectedGroup(activeGroupId);
+    }
+  }, [activeGroupId, editMode]);
 
   // Only show modal in edit modes
   if (editMode === 'none') return null;

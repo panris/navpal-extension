@@ -80,8 +80,6 @@ export default function App() {
     ? bookmarks.filter((b) => b.groupId === activeGroupId)
     : bookmarks;
 
-  console.log('[NavPal] App filteredBookmarks:', activeGroupId, '→', filteredBookmarks.length, '/', bookmarks.length, filteredBookmarks.map(b => b.id + ':' + b.title).join(', '));
-
   // ── Window controls ──────────────────────────────────────────
   /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
   const handleMinimize = () => setViewMode('minimized');

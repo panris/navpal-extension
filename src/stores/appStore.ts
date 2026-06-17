@@ -174,7 +174,6 @@ export const useAppStore = create<
         if (quota.percent >= STORAGE_WARN_RATIO * 100) {
           console.warn(`[NavPal] Storage warning: ${quota.percent.toFixed(0)}% used`);
         }
-        console.log('[NavPal] addBookmark: id=' + newBookmark.id + ' groupId=' + newBookmark.groupId + ' title=' + newBookmark.title + ' totalBookmarks=' + newBookmarks.length + ' activeGroupId=' + state.activeGroupId);
         set({ bookmarks: newBookmarks });
       },
 
