@@ -201,7 +201,7 @@ export default function EditModal() {
                 placeholder={getText('bookmarkTitle', lang)}
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900 placeholder-gray-500"
                 maxLength={60}
               />
               <div className="relative">
@@ -214,10 +214,10 @@ export default function EditModal() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleAddBookmark();
                   }}
-                  className={`w-full px-4 py-3 pr-10 text-sm border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                  className={`w-full px-4 py-3 pr-10 text-sm border rounded-xl focus:outline-none focus:ring-2 transition-all bg-white text-gray-900 placeholder-gray-500 ${
                     urlError
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                      : 'border-gray-200 focus:border-violet-500 focus:ring-violet-100'
+                      : 'border-gray-300 focus:border-violet-500 focus:ring-violet-100'
                   }`}
                 />
                 {urlError && (
@@ -235,7 +235,7 @@ export default function EditModal() {
                 placeholder={getText('descZhPlaceholder', lang) || '简介（中文，选填）'}
                 value={newDescZh}
                 onChange={(e) => setNewDescZh(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none bg-white text-gray-900 placeholder-gray-500"
                 rows={2}
                 maxLength={200}
               />
@@ -243,7 +243,7 @@ export default function EditModal() {
                 placeholder={getText('descEnPlaceholder', lang) || 'Description (English, optional)'}
                 value={newDescEn}
                 onChange={(e) => setNewDescEn(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none bg-white text-gray-900 placeholder-gray-500"
                 rows={2}
                 maxLength={400}
               />
@@ -251,21 +251,21 @@ export default function EditModal() {
               <select
                 value={newRegion ?? ''}
                 onChange={(e) => setNewRegion(e.target.value ? (e.target.value as 'CN' | 'Global') : null)}
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900"
               >
                 <option value="">{getText('regionAuto', lang) || '自动（不区分语言）'}</option>
                 <option value="CN">{getText('regionCN', lang) || '🇨🇳 国内专用'}</option>
                 <option value="Global">{getText('regionGlobal', lang) || '🌐 全球通用'}</option>
               </select>
               {editMode === 'group' ? (
-                <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="px-3 py-2 text-sm text-gray-700 bg-white rounded-lg border border-gray-300">
                   {groups.find((g) => g.id === activeGroupId)?.name || ''}
                 </div>
               ) : (
                 <select
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+                  className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900"
                 >
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
