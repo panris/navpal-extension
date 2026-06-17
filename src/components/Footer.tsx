@@ -2,6 +2,9 @@ import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
 import { Eye, EyeOff } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
+// Build timestamp — bump this to confirm extension reload
+const BUILD_TS = 'b487c48';
+
 function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
   if (region === 'CN' && lang === 'en') return false;
   return true;
@@ -33,7 +36,7 @@ export default function Footer() {
         {/* Left: Status */}
         <div className="flex items-center gap-3">
           <span className="text-xs font-medium text-gray-600">
-            📌 {visibleCount} {getText('bookmarks', lang)}
+            📌 {visibleCount} {getText('bookmarks', lang)} <span className="text-gray-300">v{BUILD_TS}</span>
           </span>
           {hiddenCount > 0 && !isRevealMode && (
             <span className="flex items-center gap-1 text-xs font-medium text-amber-600">

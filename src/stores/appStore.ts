@@ -148,7 +148,7 @@ export const useAppStore = create<
       addBookmark: (bookmark) => {
         const state = get();
         const groupBookmarks = state.bookmarks.filter((b) => b.groupId === bookmark.groupId);
-        const region = bookmark.region ?? autoDetectRegion(bookmark.url);
+        const region = bookmark.region ?? null;  // 新书签默认不区分语言，用户可在编辑时手动设置
 
         const newBookmark: Bookmark = {
           ...bookmark,
@@ -174,8 +174,21 @@ export const useAppStore = create<
         if (quota.percent >= STORAGE_WARN_RATIO * 100) {
           console.warn(`[NavPal] Storage warning: ${quota.percent.toFixed(0)}% used`);
         }
-        console.log('[NavPal v022923d] addBookmark:', newBookmark.id, 'groupId:', newBookmark.groupId, 'total:', newBookmarks.length);
+        console.log('[NavPal v022923d] addBookmark:', newBookmark.id, 'groupId:', newBookmark.groupId, 'title:', newBookmark.title, 'total:', newBookmarks.length);
         set({ bookmarks: newBookmarks });
+        // Verify: log store state immediately after set
+        setTimeout(() => {
+          const afterState = get();
+          console.log('[NavPal v022923d] after set, store bookmarks:', afterState.bookmarks.length, 'last bookmark:', afterState.bookmarks[afterState.bookmarks.length - 1]?.title);
+          // Also check localStorage
+          try {
+            const stored = localStorage.getItem('navpal-storage');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              console.log('[NavPal v022923d] localStorage bookmarks:', parsed.state?.bookmarks?.length);
+            }
+          } catch(e) { console.error('[NavPal v022923d] localStorage check failed', e); }
+        }, 100);
       },
 
       updateBookmark: (id, updates) => {

@@ -52,6 +52,9 @@ export default function EditModal() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newUrl, setNewUrl] = useState('');
+  const [newDescZh, setNewDescZh] = useState('');
+  const [newDescEn, setNewDescEn] = useState('');
+  const [newRegion, setNewRegion] = useState<'CN' | 'Global' | null>(null);
   const [selectedGroup, setSelectedGroup] = useState(activeGroupId || groups[0]?.id || '');
   const [urlError, setUrlError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,14 +102,20 @@ export default function EditModal() {
     addBookmark({
       title: newTitle.trim(),
       url,
-      region,
-      regionManual: false,
+      description: newDescZh.trim() || newDescEn.trim()
+        ? { zh: newDescZh.trim() || newTitle.trim(), en: newDescEn.trim() || newTitle.trim() }
+        : undefined,
+      region: newRegion,
+      regionManual: newRegion !== null,
       hidden: false,
       groupId: selectedGroup,
     });
 
     setNewTitle('');
     setNewUrl('');
+    setNewDescZh('');
+    setNewDescEn('');
+    setNewRegion(null);
     setUrlError('');
     setShowAddForm(false);
     setIsSubmitting(false);
@@ -116,6 +125,9 @@ export default function EditModal() {
     setShowAddForm(false);
     setNewTitle('');
     setNewUrl('');
+    setNewDescZh('');
+    setNewDescEn('');
+    setNewRegion(null);
     setUrlError('');
   };
 
@@ -218,6 +230,33 @@ export default function EditModal() {
                   {urlError}
                 </p>
               )}
+              {/* Description (optional) */}
+              <textarea
+                placeholder={getText('descZhPlaceholder', lang) || '简介（中文，选填）'}
+                value={newDescZh}
+                onChange={(e) => setNewDescZh(e.target.value)}
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                rows={2}
+                maxLength={200}
+              />
+              <textarea
+                placeholder={getText('descEnPlaceholder', lang) || 'Description (English, optional)'}
+                value={newDescEn}
+                onChange={(e) => setNewDescEn(e.target.value)}
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none"
+                rows={2}
+                maxLength={400}
+              />
+              {/* Region selector */}
+              <select
+                value={newRegion ?? ''}
+                onChange={(e) => setNewRegion(e.target.value ? (e.target.value as 'CN' | 'Global') : null)}
+                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+              >
+                <option value="">{getText('regionAuto', lang) || '自动（不区分语言）'}</option>
+                <option value="CN">{getText('regionCN', lang) || '🇨🇳 国内专用'}</option>
+                <option value="Global">{getText('regionGlobal', lang) || '🌐 全球通用'}</option>
+              </select>
               {editMode === 'group' ? (
                 <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
                   {groups.find((g) => g.id === activeGroupId)?.name || ''}

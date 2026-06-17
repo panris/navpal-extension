@@ -104,7 +104,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const bookmarksState = useAppStore((s) => s.bookmarks);
   const reorderBookmarks = useAppStore((s) => s.reorderBookmarks);
 
-  const filteredBookmarks = useMemo(() => bookmarks.filter((b) => {
+  const filteredBookmarks = useMemo(() => {
+    const result = bookmarks.filter((b) => {
     if (!isBookmarkVisible(b.region, lang)) return false;
     if (editMode === 'group' && activeGroupId) {
       if (b.groupId !== activeGroupId) return false;
@@ -124,7 +125,10 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       if (!matchTitle && !matchUrl && !matchDescZh && !matchDescEn) return false;
     }
     return true;
-  }), [bookmarks, lang, editMode, activeGroupId, isRevealMode, searchQuery]);
+    });
+    console.log('[NavPal DBG] BookmarkGrid useMemo: input bookmarks:', bookmarks.length, 'filtered:', result.length, 'editMode:', editMode, 'activeGroupId:', activeGroupId, 'lang:', lang);
+    return result;
+  }, [bookmarks, lang, editMode, activeGroupId, isRevealMode, searchQuery]);
 
   const sortedBookmarks = useMemo(() => [...filteredBookmarks].sort((a, b) => a.order - b.order), [filteredBookmarks]);
   const bookmarkIds = sortedBookmarks.map((b) => b.id);

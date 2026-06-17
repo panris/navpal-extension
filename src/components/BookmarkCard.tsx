@@ -102,7 +102,7 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   const iconStyle = getIconStyle(bookmark.id);
   const iconLetter = getIconLetter(bookmark.url, bookmark.title);
   const iconPattern = getIconPattern(bookmark.id);
-  const description = bookmark.description || getDescription(bookmark.url);
+  const description = bookmark.description || getDescription(bookmark.url) || { zh: bookmark.title, en: bookmark.title };
 
   // Check states
   const isGroupHidden = bookmark.groupHidden?.[groupId];
