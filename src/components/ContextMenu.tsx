@@ -1,7 +1,21 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { Sparkles, Code, Palette, Briefcase, Wrench, Music, Gamepad2 } from 'lucide-react';
 import { Bookmark } from '@/types';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
 import { useCurrentLang, getText } from '@/utils/i18n';
+
+function getGroupIcon(icon: string | undefined): React.ReactNode {
+  switch (icon) {
+    case 'sparkles': return <Sparkles size={14} />;
+    case 'code': return <Code size={14} />;
+    case 'palette': return <Palette size={14} />;
+    case 'briefcase': return <Briefcase size={14} />;
+    case 'wrench': return <Wrench size={14} />;
+    case 'music': return <Music size={14} />;
+    case 'gamepad-2': return <Gamepad2 size={14} />;
+    default: return '📁';
+  }
+}
 
 interface ContextMenuProps {
   bookmark: Bookmark;
@@ -167,8 +181,8 @@ function ContextMenuInner({ bookmark, x, y, onClose }: ContextMenuProps) {
                   onClick={() => handleMoveToGroup(group.id)}
                   className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700"
                 >
-                  {group.icon && <span>{group.icon}</span>}
-                  <span>{group.name}</span>
+                  {group.icon && <span>{getGroupIcon(group.icon)}</span>}
+                  <span>{getGroupDisplayName(group, lang)}</span>
                 </button>
               ))}
             </div>

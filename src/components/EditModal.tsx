@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Plus, AlertCircle, RotateCcw, Trash2 } from 'lucide-react';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
 import { normalizeUrl, autoDetectRegion } from '@/utils';
 import { ICON_GRADIENTS } from './BookmarkCard';
 import { useCurrentLang, getText } from '@/utils/i18n';
@@ -269,7 +269,7 @@ export default function EditModal() {
                 >
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name}
+                      {getGroupDisplayName(group, lang)}
                     </option>
                   ))}
                 </select>

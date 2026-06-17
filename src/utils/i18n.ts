@@ -28,6 +28,8 @@ const UI_TEXT = {
   window: { zh: '窗口', en: 'Window' },
   groups: { zh: '分组', en: 'Groups' },
   data: { zh: '数据', en: 'Data' },
+  appearance: { zh: '外观', en: 'Appearance' },
+  theme: { zh: '主题', en: 'Theme' },
   expand: { zh: '展开', en: 'Expand' },
   minimize: { zh: '最小化', en: 'Minimize' },
   maximize: { zh: '最大化', en: 'Maximize' },
@@ -152,7 +154,7 @@ export function formatCount(count: number, lang: 'zh' | 'en'): string {
 // ─── 语言选项 ──────────────────────────────────────────────────
 export const LANG_OPTIONS: Array<{ value: LangPref; label: { zh: string; en: string }; icon: string }> = [
   { value: 'auto', label: { zh: '跟随系统', en: 'Follow System' }, icon: '🔄' },
-  { value: 'zh', label: { zh: '中文', en: '中文' }, icon: '🇨🇳' },
+  { value: 'zh', label: { zh: '中文', en: 'Chinese' }, icon: '🇨🇳' },
   { value: 'en', label: { zh: 'English', en: 'English' }, icon: '🇺🇸' },
 ];
 

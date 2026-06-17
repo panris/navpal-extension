@@ -6,6 +6,24 @@ import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/see
 import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
 import type { LangPref } from '@/components/BookmarkCard';
 
+// Theme types
+export type ThemeName = 'light' | 'dark' | 'purple' | 'minimal';
+
+// ─── Theme event bus ─────────────────────────────────────────────
+type ThemeListener = (theme: ThemeName) => void;
+const themeListeners = new Set<ThemeListener>();
+
+export function subscribeTheme(listener: ThemeListener): () => void {
+  themeListeners.add(listener);
+  return () => themeListeners.delete(listener);
+}
+
+function notifyThemeChange(theme: ThemeName) {
+  // Apply theme to document
+  document.documentElement.setAttribute('data-theme', theme);
+  themeListeners.forEach((l) => l(theme));
+}
+
 // ─── Storage quota ───────────────────────────────────────────────
 function checkStorageQuota(data: object): { allowed: boolean; usedKB: number; percent: number } {
   const usedKB = new Blob([JSON.stringify(data)]).size / 1024;
@@ -75,7 +93,7 @@ function migrateData(state: { groups: Group[]; bookmarks: Bookmark[]; settings: 
 
 // ─── Store ───────────────────────────────────────────────────────
 export const useAppStore = create<
-  AppState & { langPref: LangPref; setLangPref: (p: LangPref) => void }
+  AppState & { langPref: LangPref; setLangPref: (p: LangPref) => void; theme: ThemeName; setTheme: (t: ThemeName) => void }
 >()(
   persist(
     (set, get) => ({
@@ -93,6 +111,12 @@ export const useAppStore = create<
         const lang = getEffectiveLang(pref);
         set({ langPref: pref });
         notifyLangChange(lang);
+      },
+
+      theme: 'light',
+      setTheme: (theme) => {
+        set({ theme });
+        notifyThemeChange(theme);
       },
 
       // 模式切换
@@ -316,6 +340,9 @@ export const useAppStore = create<
           state.groups = migrated.groups;
           state.bookmarks = migrated.bookmarks;
           state.settings = migrated.settings as AppState['settings'];
+          // Apply theme on load
+          const theme = (state as unknown as { theme?: ThemeName }).theme || 'light';
+          setTimeout(() => notifyThemeChange(theme), 0);
         }
         // Notify after hydration completes
         notifyHydration();

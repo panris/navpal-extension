@@ -44,12 +44,14 @@ export default function App() {
     maxHeight: 800,
   });
 
-  // Initialize language from langPref on mount
+  // Initialize language and theme from stored preferences on mount
   useEffect(() => {
     const langPref = useAppStore.getState().langPref;
+    const theme = useAppStore.getState().theme;
     const effectiveLang = getEffectiveLang(langPref);
-    import('@/stores/appStore').then(({ notifyLangChange }) => {
+    import('@/stores/appStore').then(({ notifyLangChange, notifyThemeChange }) => {
       notifyLangChange(effectiveLang);
+      notifyThemeChange(theme);
     });
   }, []);
 
@@ -129,7 +131,7 @@ export default function App() {
 
   return (
     <div
-      className="flex flex-col bg-gray-50 relative overflow-hidden transition-all duration-300"
+      className="flex flex-col relative overflow-hidden transition-all duration-300"
       style={{
         width: `${width}px`,
         height: containerHeight,

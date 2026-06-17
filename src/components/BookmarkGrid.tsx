@@ -46,22 +46,14 @@ function EmptyState({ lang, onAdd, mode }: { lang: 'zh' | 'en'; onAdd: () => voi
   const l = labels[mode][lang];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full py-8">
-      {/* Illustration */}
-      <div className="relative mb-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 flex items-center justify-center">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="text-violet-500/60">
-            <path d="M24 4C13 4 4 13 4 24s9 20 20 20 20-9 20-20S35 4 24 4zm0 35c-8.3 0-15-6.7-15-15S15.7 9 24 9s15 6.7 15 15-6.7 15-15 15zm0-25c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10z" fill="currentColor" opacity="0.4"/>
-            <circle cx="24" cy="24" r="5" fill="currentColor" opacity="0.6"/>
-            <path d="M24 12v4M24 32v4M12 24h4M32 24h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-          </svg>
-        </div>
-      </div>
-      <p className="text-base font-medium text-gray-500 mb-1">{l.title}</p>
-      <p className="text-xs text-gray-400 mb-6">{l.desc}</p>
+    <div className="empty-state">
+      <div className="empty-state-icon">🔖</div>
+      <p className="empty-state-title">{l.title}</p>
+      <p className="empty-state-desc">{l.desc}</p>
       <button
         onClick={onAdd}
-        className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl hover:shadow-lg transition-all"
+        className="settings-btn-full primary"
+        style={{ padding: '10px 20px' }}
       >
         {l.button}
       </button>
@@ -295,32 +287,32 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     <div>
       {/* Batch Action Bar */}
       {showBatchBar && (
-        <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-xl flex items-center gap-2">
-          <span className="text-sm font-semibold text-violet-700">
+        <div className="batch-bar">
+          <span className="batch-count">
             {selectedIds.size} {lang === 'zh' ? '已选中' : 'selected'}
           </span>
-          <div className="ml-auto flex gap-1.5">
+          <div className="batch-actions">
             <button
               onClick={() => setBatchActionMenu(batchActionMenu ? null : 'move')}
-              className="px-3 py-1 text-xs font-semibold bg-white text-violet-600 border border-violet-200 rounded-lg hover:bg-violet-50"
+              className="batch-btn"
             >
               {lang === 'zh' ? '移动到' : 'Move to'}
             </button>
             <button
               onClick={handleBatchHide}
-              className="px-3 py-1 text-xs font-semibold bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50"
+              className="batch-btn"
             >
               {lang === 'zh' ? '隐藏' : 'Hide'}
             </button>
             <button
               onClick={handleBatchDelete}
-              className="px-3 py-1 text-xs font-semibold bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
+              className="batch-btn danger"
             >
               {lang === 'zh' ? '删除' : 'Delete'}
             </button>
             <button
               onClick={handleClearSelection}
-              className="px-3 py-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+              className="batch-btn"
             >
               ✕
             </button>
@@ -345,75 +337,58 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         </div>
       )}
 
-      {/* Quick Remove Bar — only visible when selection is active and keyboard selection is enabled */}
+      {/* Quick Remove Bar */}
       {editMode === 'none' && !searchQuery && selectedIds.size > 0 && (
-        <div className="mb-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">
-              {lang === 'zh' ? '快速移除' : 'Quick Remove'}
-            </span>
-            <div className="ml-auto flex gap-1.5">
-              {/* Remove from group — disabled when no active group */}
-              <button
-                onClick={() => {
-                  selectedIds.forEach((id) => {
-                    const bookmark = bookmarksState.find((b) => b.id === id);
-                    if (bookmark && activeGroupId) {
-                      deleteBookmarkFromGroup(id, activeGroupId);
-                    }
-                  });
-                  setSelectedIds(new Set());
-                }}
-                className={`px-3 py-1 text-xs font-medium bg-white border rounded-lg transition-colors flex items-center gap-1 ${!activeGroupId ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-                title={
-                  !activeGroupId
-                    ? (lang === 'zh' ? '没有激活的分组' : 'No active group')
-                    : (lang === 'zh' ? '移出当前分组' : 'Remove from current group')
-                }
-                disabled={!activeGroupId}
-              >
-                <ArrowLeft className="w-3 h-3" />
-                {lang === 'zh' ? '移出分组' : 'From Group'}
-              </button>
-              {/* Remove from all groups */}
-              <button
-                onClick={() => {
-                  selectedIds.forEach((id) => hideBookmarkGlobally(id));
-                  setSelectedIds(new Set());
-                }}
-                className="px-3 py-1 text-xs font-medium bg-white text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-1"
-                title={lang === 'zh' ? '从所有分组移除（隐藏）' : 'Remove from all groups (hide)'}
-              >
-                <EyeOff className="w-3 h-3" />
-                {lang === 'zh' ? '全部隐藏' : 'Hide All'}
-              </button>
-              {/* Delete completely */}
-              <button
-                onClick={() => {
-                  selectedIds.forEach((id) => deleteBookmarkGlobally(id));
-                  setSelectedIds(new Set());
-                }}
-                className="px-3 py-1 text-xs font-medium bg-white text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
-                title={lang === 'zh' ? '彻底删除' : 'Delete permanently'}
-              >
-                <Trash2 className="w-3 h-3" />
-                {lang === 'zh' ? '彻底删除' : 'Delete'}
-              </button>
-            </div>
+        <div className="batch-bar">
+          <span className="text-xs text-gray-500 font-medium">
+            {lang === 'zh' ? '快速移除' : 'Quick Remove'}
+          </span>
+          <div className="batch-actions">
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => {
+                  const bookmark = bookmarksState.find((b) => b.id === id);
+                  if (bookmark && activeGroupId) {
+                    deleteBookmarkFromGroup(id, activeGroupId);
+                  }
+                });
+                setSelectedIds(new Set());
+              }}
+              className={`batch-btn ${!activeGroupId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={!activeGroupId}
+            >
+              <ArrowLeft size={12} className="inline mr-1" />
+              {lang === 'zh' ? '移出分组' : 'From Group'}
+            </button>
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => hideBookmarkGlobally(id));
+                setSelectedIds(new Set());
+              }}
+              className="batch-btn"
+            >
+              <EyeOff size={12} className="inline mr-1" />
+              {lang === 'zh' ? '全部隐藏' : 'Hide All'}
+            </button>
+            <button
+              onClick={() => {
+                selectedIds.forEach((id) => deleteBookmarkGlobally(id));
+                setSelectedIds(new Set());
+              }}
+              className="batch-btn danger"
+            >
+              <Trash2 size={12} className="inline mr-1" />
+              {lang === 'zh' ? '彻底删除' : 'Delete'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Quick Actions - Hidden for release */}
-      {/* <div className="flex gap-2 mb-4">
-        ...revealAll & globalEdit buttons...
-      </div> */}
-
       {/* Edit Mode Indicator */}
       {editMode !== 'none' && (
-        <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="edit-mode-banner">
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${editMode === 'group' ? 'text-blue-700' : 'text-violet-700'}`}>
+            <span className="edit-mode-title">
               {editMode === 'group' ? (
                 <>{currentGroupName} - {getText('groupEditMode', lang)}</>
               ) : (
@@ -421,18 +396,17 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               )}
             </span>
           </div>
-          <p className={`text-xs mt-1 ${editMode === 'group' ? 'text-blue-600' : 'text-violet-600'}`}>
+          <p className="edit-mode-hint">
             {editMode === 'group' ? getText('groupEditHint', lang) : getText('globalEditHint', lang)}
           </p>
         </div>
       )}
 
-      {/* Hidden Count Badge - ONLY for All tab */}
+      {/* Hidden Count Badge */}
       {totalHidden > 0 && activeGroupId === null && editMode === 'none' && !isRevealMode && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-amber-50 rounded-lg border border-amber-200">
-          <span className="text-xs font-medium text-amber-700">
-            {totalHidden} {getText('hiddenBookmarks', lang)}
-          </span>
+        <div className="hidden-badge">
+          <EyeOff size={12} />
+          {totalHidden} {getText('hiddenBookmarks', lang)}
         </div>
       )}
 
@@ -500,7 +474,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col max-h-[50vh]"
+          className="context-menu"
           style={{
             left: contextMenu.x,
             top: contextMenu.flipped ? undefined : contextMenu.y,
@@ -508,63 +482,61 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {/* Top actions - fixed */}
-          <div className="shrink-0">
+          {/* Top actions */}
+          <div>
             <button
               onClick={handleContextCopyUrl}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              className="context-menu-item"
             >
-              <Copy className="w-4 h-4 text-violet-500" />
+              <Copy size={14} className="text-indigo-500" />
               {getText('copyUrl', lang)}
             </button>
             <button
               onClick={handleContextOpenNewTab}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              className="context-menu-item"
             >
-              <ExternalLink className="w-4 h-4 text-blue-500" />
+              <ExternalLink size={14} className="text-blue-500" />
               {getText('openInNewTab', lang)}
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="h-px bg-gray-100 shrink-0" />
+          <div className="context-menu-divider" />
 
-          {/* Groups - scrollable */}
-          <div className="overflow-y-auto flex-1 min-h-0">
-            <div className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white">
+          {/* Groups */}
+          <div className="px-3 py-1.5">
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
               {getText('moveTo', lang)}
-            </div>
-            {groups
-              .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
-              .map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => handleContextMoveTo(g.id)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <span>{g.icon || '📁'}</span>
-                  <span className="truncate">{g.name}</span>
-                </button>
-              ))}
+            </span>
           </div>
+          {groups
+            .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
+            .map((g) => (
+              <button
+                key={g.id}
+                onClick={() => handleContextMoveTo(g.id)}
+                className="context-menu-item"
+              >
+                <span>{g.icon || '📁'}</span>
+                <span className="truncate">{g.name}</span>
+              </button>
+            ))}
 
-          {/* Divider */}
-          <div className="h-px bg-gray-100 shrink-0" />
+          <div className="context-menu-divider" />
 
-          {/* Bottom actions - fixed */}
-          <div className="shrink-0">
+          {/* Bottom actions */}
+          <div>
             <button
               onClick={handleContextHide}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+              className="context-menu-item"
             >
-              <EyeOff className="w-4 h-4" />
+              <EyeOff size={14} />
               {getText('hideBookmark', lang)}
             </button>
             <button
               onClick={handleContextDelete}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+              className="context-menu-item danger"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 size={14} />
               {getText('deleteAction', lang)}
             </button>
           </div>

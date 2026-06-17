@@ -2,7 +2,6 @@ import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
 import { Eye, EyeOff } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
-// Build timestamp — bump this to confirm extension reload
 const BUILD_TS = 'b487c48';
 
 function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
@@ -15,7 +14,6 @@ export default function Footer() {
   const bookmarks = useAppStore((state) => state.bookmarks);
   const lang = useCurrentLang();
 
-  // Use same filter logic as GroupTabs "All" count for consistency
   const visibleCount = bookmarks.filter((b) => {
     if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
     if (!isBookmarkVisible(b.region, lang)) return false;
@@ -31,26 +29,24 @@ export default function Footer() {
   }).length;
 
   return (
-    <footer data-tour="reveal" className="bg-white border-t border-gray-100 px-4 py-3">
+    <footer className="footer">
       <div className="flex items-center justify-between">
-        {/* Left: Status */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-gray-600">
-            📌 {visibleCount} {getText('bookmarks', lang)} <span className="text-gray-300">v{BUILD_TS}</span>
-          </span>
+        <div className="footer-stats">
+          📌 {visibleCount} {getText('bookmarks', lang)}
           {hiddenCount > 0 && !isRevealMode && (
-            <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
-              <EyeOff className="w-3.5 h-3.5" />
+            <span className="ml-2" style={{ color: 'var(--warning-color)' }}>
+              <EyeOff size={12} className="inline mr-1" />
               {hiddenCount} {getText('hidden', lang)}
             </span>
           )}
           {isRevealMode && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-violet-600">
-              <Eye className="w-3.5 h-3.5" />
+            <span className="ml-2" style={{ color: 'var(--accent-color)' }}>
+              <Eye size={12} className="inline mr-1" />
               {getText('revealModeLabel', lang)}
             </span>
           )}
         </div>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>v{BUILD_TS}</span>
       </div>
     </footer>
   );

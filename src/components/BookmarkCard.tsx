@@ -371,37 +371,40 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
       {showTooltip && description && editMode === 'none' && (
         <div
           ref={tooltipRef}
-          className="tooltip-dark fixed z-50 p-4 max-w-[260px] pointer-events-none"
-          style={{ left: tooltipPos.x, top: tooltipPos.y }}
+          className="fixed z-50 p-4 max-w-[260px] pointer-events-none rounded-lg shadow-xl"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+          }}
         >
-          <div className="text-base font-bold text-white mb-1">
+          <div className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
             {bookmark.title}
           </div>
-          <div className="text-xs text-gray-400 mb-3 break-all">
+          <div className="text-xs mb-3 break-all" style={{ color: 'var(--text-muted)' }}>
             {getDomain(bookmark.url)}
           </div>
-          <div className="h-px bg-gray-700/30 my-3" />
+          <div className="h-px my-3" style={{ background: 'var(--border-color)' }} />
           {lang === 'zh' && description.zh && (
-            <div className="text-sm text-white leading-relaxed border-l-2 border-emerald-500 pl-3">
+            <div className="text-sm leading-relaxed border-l-2 pl-3" style={{ color: 'var(--text-primary)', borderColor: 'var(--accent-color)' }}>
               {description.zh}
             </div>
           )}
           {lang === 'en' && description.en && (
-            <div className="text-xs text-gray-300 leading-relaxed border-l-2 border-blue-500 pl-3">
+            <div className="text-sm leading-relaxed border-l-2 pl-3 mt-2" style={{ color: 'var(--text-secondary)', borderColor: 'var(--accent-color)' }}>
               {description.en}
             </div>
           )}
-          <div className={cn(
-            'inline-flex items-center gap-2 mt-3 px-2.5 py-1.5 text-xs font-semibold rounded-lg',
-            bookmark.region === 'CN'
-              ? 'bg-red-500/20 text-red-300'
-              : 'bg-blue-500/20 text-blue-300'
-          )}>
+          <div className="flex items-center gap-2 mt-3 px-2.5 py-1.5 text-xs font-semibold rounded-lg" style={{
+            background: bookmark.region === 'CN' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+            color: bookmark.region === 'CN' ? '#dc2626' : '#2563eb',
+          }}>
             <span>{bookmark.region === 'CN' ? getText('regionCN', lang) : getText('regionGlobal', lang)}</span>
             <span>{getRegionLabel()}</span>
           </div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-            <div className="border-8 border-transparent border-t-[#0f172a]" />
+            <div className="border-8 border-transparent border-t-[var(--bg-primary)]" />
           </div>
         </div>
       )}
