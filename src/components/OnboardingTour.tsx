@@ -164,14 +164,25 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
 }
 
 export default function OnboardingTour() {
-  const [dismissed, setDismissed] = useState(false);
-  const [step, setStep] = useState(0);
-  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const lang = useCurrentLang();
   const hasSeenOnboarding = useAppStore((s) => s.settings.hasSeenOnboarding);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
-  // Show only if hasn't seen onboarding yet, or already dismissed
+  // On mount: if already seen (e.g. store rehydrated), dismiss immediately
+  const [dismissed, setDismissed] = useState(false);
+  const [step, setStep] = useState(0);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  useEffect(() => {
+    // Run after store rehydrates — this is async but non-blocking
+    const timer = setTimeout(() => {
+      if (useAppStore.getState().settings.hasSeenOnboarding) {
+        setDismissed(true);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show nothing once dismissed OR once store confirms onboarding was already seen
   if (dismissed || hasSeenOnboarding) return null;
 
   const currentStep = TOUR_STEPS[step];

@@ -29,8 +29,6 @@ export default function App() {
   const setActiveGroup = useAppStore((s) => s.setActiveGroup);
   const toggleEditMode = useAppStore((s) => s.toggleEditMode);
   const revealMode = useAppStore((s) => s.revealMode);
-  const hasSeenOnboarding = useAppStore((s) => s.settings.hasSeenOnboarding);
-  const updateSettings = useAppStore((s) => s.updateSettings);
   const groups = useVisibleGroups();
   const bookmarks = useVisibleBookmarks();
   const lang = useCurrentLang();
@@ -223,15 +221,6 @@ export default function App() {
       {isResizing && (
         <div className="absolute inset-0 pointer-events-none z-50" />
       )}
-      {/* DEBUG: always-visible diagnostic strip (remove after diagnosis) */}
-      <div className="absolute top-0 right-0 z-[99999] bg-yellow-100 border border-yellow-300 rounded-bl-lg px-2 py-0.5 text-[10px] font-mono flex flex-col gap-0.5 opacity-90">
-        <span>onboard=<span className="font-bold">{String(hasSeenOnboarding)}</span></span>
-        <span>g=<span className="font-bold">{groups.length}</span> b=<span className="font-bold">{bookmarks.length}</span></span>
-        <span>view=<span className="font-bold">{viewMode}</span></span>
-        <span>sz=<span className="font-bold">{width}×{height}</span></span>
-        <button onClick={() => updateSettings({ hasSeenOnboarding: true })} className="bg-green-500 text-white rounded px-1 text-[9px] mt-1">done✅</button>
-        <button onClick={() => updateSettings({ hasSeenOnboarding: false })} className="bg-red-500 text-white rounded px-1 text-[9px]">reset❌</button>
-      </div>
     </div>
   );
 }
