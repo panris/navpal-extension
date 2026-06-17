@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Sparkles, Code, Palette, Briefcase, Wrench, Music, Gamepad2 } from 'lucide-react';
 import { Bookmark } from '@/types';
-import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
 function getGroupIcon(icon: string | undefined): React.ReactNode {
@@ -64,6 +64,17 @@ function ContextMenuInner({ bookmark, x, y, onClose }: ContextMenuProps) {
     };
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = Array.from(
+          menuRef.current?.querySelectorAll('.context-menu-item:not([disabled])') ?? []
+        );
+        const idx = items.indexOf(document.activeElement as HTMLElement);
+        const next = e.key === 'ArrowDown'
+          ? Math.min(items.length - 1, idx + 1)
+          : Math.max(0, idx - 1);
+        (items[next] as HTMLElement | undefined)?.focus();
+      }
     };
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleEsc);
@@ -182,7 +193,7 @@ function ContextMenuInner({ bookmark, x, y, onClose }: ContextMenuProps) {
                   className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700"
                 >
                   {group.icon && <span>{getGroupIcon(group.icon)}</span>}
-                  <span>{getGroupDisplayName(group, lang)}</span>
+                  <span>{group.name}</span>
                 </button>
               ))}
             </div>
