@@ -262,10 +262,13 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
           isFocused && 'ring-2 ring-violet-400 ring-offset-2'
         )}
       >
-        {/* Selection checkbox — visible on hover when not in edit mode */}
+        {/* Selection checkbox — always visible when selected, otherwise on hover */}
         {editMode === 'none' && !isDeleted && (
           <div
-            className="absolute top-1 right-1 z-10 opacity-0 group-hover/bookmark:opacity-100 transition-opacity"
+            className={cn(
+              'absolute top-1 right-1 z-10 transition-opacity',
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover/bookmark:opacity-100'
+            )}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
