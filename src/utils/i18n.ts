@@ -101,8 +101,11 @@ const UI_TEXT = {
   tryAgain: { zh: '重试', en: 'Try Again' },
 
   // Region labels
-  regionCN: { zh: '🇨🇳', en: '🇨🇳' },
-  regionGlobal: { zh: '🌍', en: '🌍' },
+  regionAuto:  { zh: '自动（不区分语言）', en: 'Auto (all languages)' },
+  regionCN:    { zh: '🇨🇳', en: '🇨🇳' },
+  regionGlobal: { zh: '🌐', en: '🌐' },
+  descZhPlaceholder: { zh: '简介（中文，选填）', en: 'Description (Chinese, optional)' },
+  descEnPlaceholder: { zh: '简介（英文，选填）', en: 'Description (English, optional)' },
 
   // Context menu / Bookmark grid
   copyUrl: { zh: '复制网址', en: 'Copy URL' },
