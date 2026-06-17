@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -82,7 +82,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     bookmarkId: string;
     x: number;
     y: number;
+    flipped: boolean;
   } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const [showBatchBar, setShowBatchBar] = useState(false);
   const [batchActionMenu, setBatchActionMenu] = useState<string | null>(null);
 
@@ -215,7 +217,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   const handleContextMenu = (e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
-    setContextMenu({ bookmarkId, x: e.clientX, y: e.clientY });
+    const x = Math.min(e.clientX, window.innerWidth - 200);
+    const flipped = e.clientY > window.innerHeight - 250;
+    setContextMenu({ bookmarkId, x, y: flipped ? e.clientY : e.clientY, flipped });
   };
 
   // Context menu actions
@@ -483,8 +487,13 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {/* Right-click Context Menu */}
       {contextMenu && (
         <div
+          ref={contextMenuRef}
           className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 min-w-[180px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.flipped ? undefined : contextMenu.y,
+            bottom: contextMenu.flipped ? window.innerHeight - contextMenu.y : undefined,
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         >
           <button
