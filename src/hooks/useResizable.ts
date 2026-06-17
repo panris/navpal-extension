@@ -138,10 +138,19 @@ export function useResizable(options: ResizeOptions = {}) {
     };
   }, [size.isResizing, clamp, minWidth, maxWidth, minHeight, maxHeight]);
 
+  const resizeTo = useCallback((w: number, h: number) => {
+    setSize((prev) => ({
+      ...prev,
+      width: clamp(w, minWidth, maxWidth),
+      height: clamp(h, minHeight, maxHeight),
+    }));
+  }, [clamp, minWidth, maxWidth, minHeight, maxHeight]);
+
   return {
     width: size.width,
     height: size.height,
     isResizing: size.isResizing,
     handleMouseDown,
+    resizeTo,
   };
 }

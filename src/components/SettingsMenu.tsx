@@ -9,6 +9,7 @@ import type { LangPref } from './BookmarkCard';
 interface SettingsMenuProps {
   onMinimize?: () => void;
   onMaximize?: () => void;
+  onRestore?: () => void;
   isMinimized?: boolean;
 }
 
@@ -21,7 +22,7 @@ interface GroupEditState {
   emoji: string;
 }
 
-export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: SettingsMenuProps) {
+export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMinimized }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<'main' | 'groups' | 'data'>('main');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -188,7 +189,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, isMinimized }: Se
                 <p className="text-xs font-medium text-gray-400 uppercase mb-2">{getText('windowControls', lang)}</p>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { isMinimized ? onMaximize?.() : onMinimize?.(); setIsOpen(false); }}
+                    onClick={() => { isMinimized ? onRestore?.() : onMinimize?.(); setIsOpen(false); }}
                     className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                   >
                     {isMinimized ? getText('expand', lang) : getText('minimize', lang)}

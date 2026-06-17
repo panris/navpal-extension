@@ -7,10 +7,11 @@ import { useCurrentLang, getText } from '@/utils/i18n';
 interface HeaderProps {
   onMinimize?: () => void;
   onMaximize?: () => void;
+  onRestore?: () => void;
   isMinimized?: boolean;
 }
 
-export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderProps) {
+export default function Header({ onMinimize, onMaximize, onRestore, isMinimized }: HeaderProps) {
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const isRevealMode = useAppStore((state) => state.isRevealMode);
@@ -57,6 +58,7 @@ export default function Header({ onMinimize, onMaximize, isMinimized }: HeaderPr
         <SettingsMenu
           onMinimize={onMinimize}
           onMaximize={onMaximize}
+          onRestore={onRestore}
           isMinimized={isMinimized}
         />
       </div>

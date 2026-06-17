@@ -21,8 +21,6 @@ function formatTime(): string {
   return `${h}:${m}`;
 }
 
-// Full-page 入口（manifest web_accessible_resources 配置）
-const FULLPAGE_URL = chrome.runtime.getURL('index.html');
 
 export default function App() {
   const isRevealMode = useAppStore((s) => s.isRevealMode);
@@ -37,9 +35,10 @@ export default function App() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('default');
   const [currentTime, setCurrentTime] = useState(formatTime);
+  const prevSizeRef = useRef<{ w: number; h: number } | null>(null);
 
   // ── Resizable popup ─────────────────────────────────────────────
-  const { width, height, isResizing, handleMouseDown } = useResizable({
+  const { width, height, isResizing, handleMouseDown, resizeTo } = useResizable({
     minWidth: 320,
     maxWidth: 800,
     minHeight: 400,
@@ -85,13 +84,19 @@ export default function App() {
   /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
   const handleMinimize = () => setViewMode('minimized');
 
-  /** 恢复正常（从最小化展开） */
-  const handleRestore = () => setViewMode('default');
+  /** 恢复正常：从最小化展开，或从最大化回到之前尺寸 */
+  const handleRestore = () => {
+    if (prevSizeRef.current && width >= 800 && height >= 800) {
+      resizeTo(prevSizeRef.current.w, prevSizeRef.current.h);
+      prevSizeRef.current = null;
+    }
+    setViewMode('default');
+  };
 
-  /** 最大化：打开完整页面，关闭当前 popup */
+  /** 最大化：记录当前尺寸，将弹窗扩展到最大尺寸（800x800） */
   const handleMaximize = () => {
-    window.open(FULLPAGE_URL, '_blank');
-    window.close();
+    prevSizeRef.current = { w: width, h: height };
+    resizeTo(800, 800);
   };
 
   // ── Keyboard shortcuts ────────────────────────────────────────
@@ -176,6 +181,7 @@ export default function App() {
           <Header
             onMinimize={handleMinimize}
             onMaximize={handleMaximize}
+            onRestore={handleRestore}
             isMinimized={false}
           />
 
