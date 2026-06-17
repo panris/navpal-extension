@@ -18,6 +18,19 @@ type LangListener = (lang: 'zh' | 'en') => void;
 const langListeners = new Set<LangListener>();
 let currentLang: 'zh' | 'en' = 'zh';
 
+// ─── Hydration event bus ────────────────────────────────────────
+type HydrationListener = () => void;
+const hydrationListeners = new Set<HydrationListener>();
+
+export function subscribeHydration(listener: HydrationListener): () => void {
+  hydrationListeners.add(listener);
+  return () => hydrationListeners.delete(listener);
+}
+
+function notifyHydration() {
+  hydrationListeners.forEach((l) => l());
+}
+
 export function subscribeLang(listener: LangListener): () => void {
   langListeners.add(listener);
   listener(currentLang);
@@ -290,6 +303,8 @@ export const useAppStore = create<
           state.bookmarks = migrated.bookmarks;
           state.settings = migrated.settings as AppState['settings'];
         }
+        // Notify after hydration completes
+        notifyHydration();
       },
     }
   )

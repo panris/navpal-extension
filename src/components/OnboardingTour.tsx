@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAppStore } from '@/stores/appStore';
+import { useAppStore, subscribeHydration } from '@/stores/appStore';
 import { useCurrentLang } from '@/utils/i18n';
 
 interface TourStep {
@@ -168,21 +168,43 @@ export default function OnboardingTour() {
   const hasSeenOnboarding = useAppStore((s) => s.settings.hasSeenOnboarding);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
-  // On mount: if already seen (e.g. store rehydrated), dismiss immediately
+  // Track dismissal state
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for store hydration before checking hasSeenOnboarding
   useEffect(() => {
-    // Run after store rehydrates — this is async but non-blocking
-    const timer = setTimeout(() => {
+    // Subscribe to hydration completion
+    const unsubscribe = subscribeHydration(() => {
+      setIsHydrated(true);
+      // After hydration, check if onboarding was already completed
       if (useAppStore.getState().settings.hasSeenOnboarding) {
         setDismissed(true);
       }
+    });
+    
+    // Also check immediately in case already hydrated (e.g., on subsequent renders)
+    // We use a small timeout to let the store initialize
+    const timer = setTimeout(() => {
+      const state = useAppStore.getState();
+      if (state.settings?.hasSeenOnboarding) {
+        setDismissed(true);
+        setIsHydrated(true);
+      }
     }, 0);
-    return () => clearTimeout(timer);
+    
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
-  // Show nothing once dismissed OR once store confirms onboarding was already seen
+  // Don't render anything until hydration is complete
+  if (!isHydrated) return null;
+
+  // Early return if dismissed or already seen
   if (dismissed || hasSeenOnboarding) return null;
 
   const currentStep = TOUR_STEPS[step];

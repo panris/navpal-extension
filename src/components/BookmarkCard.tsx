@@ -76,12 +76,13 @@ function getDomain(url: string): string {
 interface BookmarkCardProps {
   bookmark: Bookmark;
   groupId: string;
+  editMode: string; // Passed from parent to ensure re-render on edit mode change
   isKeyboardSelected?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }
 
-function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected, onToggleSelect }: BookmarkCardProps) {
+function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, isSelected, onToggleSelect }: BookmarkCardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -89,8 +90,7 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected, 
 
   const lang = useCurrentLang();
 
-  // Store state
-  const editMode = useAppStore((s) => s.editMode);
+  // Store actions (editMode is now passed as prop from parent)
   const updateBookmark = useAppStore((s) => s.updateBookmark);
   const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
   const showBookmarkGlobally = useAppStore((s) => s.showBookmarkGlobally);
@@ -407,12 +407,15 @@ function BookmarkCardInner({ bookmark, groupId, isKeyboardSelected, isSelected, 
 }
 
 // Stable reference via memo
+// Note: We compare bookmark identity, selection state, AND editMode.
+// editMode is passed as prop to ensure memo re-evaluates when edit mode changes.
 const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.bookmark.title === next.bookmark.title &&
     prev.bookmark.url === next.bookmark.url &&
     prev.groupId === next.groupId &&
-    prev.isSelected === next.isSelected;
+    prev.isSelected === next.isSelected &&
+    prev.editMode === next.editMode;
 });
 
 export default BookmarkCard;

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types';
+import { useAppStore } from '@/stores/appStore';
 import BookmarkCard from './BookmarkCard';
 import { cn } from '@/utils/cn';
 
@@ -28,6 +29,9 @@ function SortableBookmarkCardInner({
   onContextMenu,
   onToggleSelect,
 }: SortableBookmarkCardProps) {
+  // Get editMode from store to ensure re-render when it changes
+  const editMode = useAppStore((s) => s.editMode);
+
   const {
     attributes,
     listeners,
@@ -58,9 +62,14 @@ function SortableBookmarkCardInner({
       data-card-id={dataCardId}
       onContextMenu={onContextMenu ? (e) => onContextMenu(e, bookmark.id) : undefined}
     >
-      <BookmarkCard bookmark={bookmark} groupId={groupId} isKeyboardSelected={isKeyboardSelected || isSelected} onToggleSelect={onToggleSelect} />
+      <BookmarkCard bookmark={bookmark} groupId={groupId} isKeyboardSelected={isKeyboardSelected || isSelected} onToggleSelect={onToggleSelect} editMode={editMode} />
     </div>
   );
 }
 
-export default memo(SortableBookmarkCardInner);
+export default memo(SortableBookmarkCardInner, (prev, next) => {
+  // Re-render when editMode changes to show/hide action buttons
+  return prev.bookmark.id === next.bookmark.id &&
+    prev.isDragging === next.isDragging &&
+    prev.isSelected === next.isSelected;
+});
