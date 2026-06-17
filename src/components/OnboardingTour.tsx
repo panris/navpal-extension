@@ -118,7 +118,7 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
       <div className="flex items-start justify-between mb-2">
         <h3 className="font-semibold text-gray-900 text-sm">{step.title[lang]}</h3>
         <button
-          onClick={onSkip}
+          onClick={(e) => { e.stopPropagation(); onSkip(); }}
           className="text-gray-400 hover:text-gray-600 text-xs"
         >
           ✕
@@ -143,14 +143,14 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
         <div className="flex gap-2">
           {current > 0 && (
             <button
-              onClick={onPrev}
+              onClick={(e) => { e.stopPropagation(); onPrev(); }}
               className="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800"
             >
               {lang === 'zh' ? '上一步' : 'Back'}
             </button>
           )}
           <button
-            onClick={onNext}
+            onClick={(e) => { e.stopPropagation(); onNext(); }}
             className="px-3 py-1 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700"
           >
             {current === total - 1
@@ -200,8 +200,8 @@ export default function OnboardingTour() {
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      // Complete - mark as seen
-      updateSettings({ hasSeenOnboarding: true });
+      // Complete - mark as seen (defer to next tick to avoid popup close race)
+      setTimeout(() => updateSettings({ hasSeenOnboarding: true }), 0);
     }
   };
 
@@ -210,7 +210,7 @@ export default function OnboardingTour() {
   };
 
   const handleSkip = () => {
-    updateSettings({ hasSeenOnboarding: true });
+    setTimeout(() => updateSettings({ hasSeenOnboarding: true }), 0);
   };
 
   return (
@@ -218,7 +218,7 @@ export default function OnboardingTour() {
       {/* Semi-transparent overlay */}
       <div
         className="fixed inset-0 z-[9998] bg-black/30"
-        onClick={handleSkip}
+        onClick={(e) => { e.stopPropagation(); handleSkip(); }}
       />
 
       {/* Spotlight cutout effect via backdrop */}
