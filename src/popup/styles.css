@@ -15,24 +15,13 @@ body {
   /* Dimensions controlled by useResizable hook via App.tsx state */
 }
 
-/* Status Bar */
-.status-bar {
-  height: 28px;
-  padding: 6px 20px 0;
-  background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
 /* App Header Gradient */
 .app-header {
   background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 8px 16px 16px;
+  padding: 14px 16px 18px;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
 }
 
 /* Search Input Glass Effect */
