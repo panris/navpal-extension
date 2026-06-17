@@ -488,7 +488,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 min-w-[180px]"
+          className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col max-h-[50vh]"
           style={{
             left: contextMenu.x,
             top: contextMenu.flipped ? undefined : contextMenu.y,
@@ -496,51 +496,66 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={handleContextCopyUrl}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Copy className="w-4 h-4 text-violet-500" />
-            {getText('copyUrl', lang)}
-          </button>
-          <button
-            onClick={handleContextOpenNewTab}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4 text-blue-500" />
-            {getText('openInNewTab', lang)}
-          </button>
-          <div className="h-px bg-gray-100 my-1.5" />
-          <div className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-            {getText('moveTo', lang)}
+          {/* Top actions - fixed */}
+          <div className="shrink-0">
+            <button
+              onClick={handleContextCopyUrl}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Copy className="w-4 h-4 text-violet-500" />
+              {getText('copyUrl', lang)}
+            </button>
+            <button
+              onClick={handleContextOpenNewTab}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4 text-blue-500" />
+              {getText('openInNewTab', lang)}
+            </button>
           </div>
-          {groups
-            .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
-            .map((g) => (
-              <button
-                key={g.id}
-                onClick={() => handleContextMoveTo(g.id)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <span>{g.icon || '📁'}</span>
-                <span className="truncate">{g.name}</span>
-              </button>
-            ))}
-          <div className="h-px bg-gray-100 my-1.5" />
-          <button
-            onClick={handleContextHide}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
-          >
-            <EyeOff className="w-4 h-4" />
-            {getText('hideBookmark', lang)}
-          </button>
-          <button
-            onClick={handleContextDelete}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-            {getText('deleteAction', lang)}
-          </button>
+
+          {/* Divider */}
+          <div className="h-px bg-gray-100 shrink-0" />
+
+          {/* Groups - scrollable */}
+          <div className="overflow-y-auto flex-1 min-h-0">
+            <div className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white">
+              {getText('moveTo', lang)}
+            </div>
+            {groups
+              .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
+              .map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => handleContextMoveTo(g.id)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <span>{g.icon || '📁'}</span>
+                  <span className="truncate">{g.name}</span>
+                </button>
+              ))}
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-gray-100 shrink-0" />
+
+          {/* Bottom actions - fixed */}
+          <div className="shrink-0">
+            <button
+              onClick={handleContextHide}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+            >
+              <EyeOff className="w-4 h-4" />
+              {getText('hideBookmark', lang)}
+            </button>
+            <button
+              onClick={handleContextDelete}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              {getText('deleteAction', lang)}
+            </button>
+          </div>
         </div>
       )}
     </div>
