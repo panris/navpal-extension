@@ -164,15 +164,15 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
 }
 
 export default function OnboardingTour() {
+  const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const lang = useCurrentLang();
   const hasSeenOnboarding = useAppStore((s) => s.settings.hasSeenOnboarding);
   const updateSettings = useAppStore((s) => s.updateSettings);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Show only if hasn't seen onboarding yet
-  if (hasSeenOnboarding) return null;
+  // Show only if hasn't seen onboarding yet, or already dismissed
+  if (dismissed || hasSeenOnboarding) return null;
 
   const currentStep = TOUR_STEPS[step];
 
@@ -200,8 +200,9 @@ export default function OnboardingTour() {
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      // Complete - mark as seen (defer to next tick to avoid popup close race)
-      setTimeout(() => updateSettings({ hasSeenOnboarding: true }), 0);
+      // Complete - dismiss immediately, persist in background
+      setDismissed(true);
+      updateSettings({ hasSeenOnboarding: true });
     }
   };
 
@@ -210,7 +211,8 @@ export default function OnboardingTour() {
   };
 
   const handleSkip = () => {
-    setTimeout(() => updateSettings({ hasSeenOnboarding: true }), 0);
+    setDismissed(true);
+    updateSettings({ hasSeenOnboarding: true });
   };
 
   return (
