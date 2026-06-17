@@ -7,8 +7,8 @@ export default function Footer() {
   const bookmarks = useAppStore((state) => state.bookmarks);
   const lang = useCurrentLang();
 
-  const visibleCount = bookmarks.filter((b) => !b.hidden).length;
-  const hiddenCount = bookmarks.filter((b) => b.hidden).length;
+  const visibleCount = bookmarks.filter((b) => !b.hidden && !b.deletedAt).length;
+  const hiddenCount = bookmarks.filter((b) => b.hidden && !b.deletedAt).length;
 
   return (
     <footer data-tour="reveal" className="bg-white border-t border-gray-100 px-4 py-3">
