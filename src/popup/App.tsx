@@ -54,9 +54,10 @@ export default function App() {
     });
   }, []);
 
-  // Default active group
+  // Default active group - only reset if activeGroupId is invalid (not in groups)
+  // Do NOT override when activeGroupId is null (user selected "All")
   useEffect(() => {
-    if (!activeGroupId && groups.length > 0) {
+    if (groups.length > 0 && activeGroupId && !groups.find((g) => g.id === activeGroupId)) {
       setActiveGroup(groups[0].id);
     }
   }, [activeGroupId, groups, setActiveGroup]);
@@ -79,6 +80,7 @@ export default function App() {
   const filteredBookmarks = activeGroupId
     ? bookmarks.filter((b) => b.groupId === activeGroupId)
     : bookmarks;
+  console.log('[NavPal DBG] App: visibleBookmarks:', bookmarks.length, 'filteredByGroup:', filteredBookmarks.length, 'activeGroupId:', activeGroupId);
 
   // ── Window controls ──────────────────────────────────────────
   /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
