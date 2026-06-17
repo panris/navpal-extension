@@ -17,7 +17,7 @@ import {
 import { Bookmark } from '@/types';
 import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
 import SortableBookmarkCard from './SortableBookmarkCard';
-import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft } from 'lucide-react';
+import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft, Plus } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 
@@ -473,6 +473,20 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
                   }}
                 />
               ))}
+              {/* Add bookmark button — hidden in edit mode since EditModal is already open */}
+              {editMode === 'none' && (
+              <button
+                onClick={() => setEditMode(activeGroupId ? 'group' : 'global')}
+                className="bookmark-card flex flex-col items-center p-3 w-full hover:scale-105 transition-transform cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 shadow-sm">
+                  <Plus className="w-5 h-5 text-violet-400" />
+                </div>
+                <span className="mt-2 text-xs font-medium text-violet-400 truncate w-full text-center">
+                  {getText('add', lang)}
+                </span>
+              </button>
+              )}
             </div>
           </SortableContext>
         </DndContext>
