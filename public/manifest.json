@@ -3,8 +3,9 @@
   "name": "伴航 NavPal",
   "version": "0.1.0",
   "description": "轻量高频网址工作台，具备物理级防窥功能",
-  "permissions": ["storage", "sidePanel"]
+  "permissions": ["storage"],
   "action": {
+    "default_popup": "src/popup/index.html",
     "default_icon": {
       "16": "icons/icon16.svg",
       "48": "icons/icon48.svg",
@@ -18,9 +19,6 @@
   },
   "background": {
     "service_worker": "assets/background.js"
-  },
-  "side_panel": {
-    "default_path": "src/popup/index.html"
   },
   "web_accessible_resources": [
     {
