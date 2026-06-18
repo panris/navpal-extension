@@ -15,7 +15,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Bookmark } from '@/types';
-import { useAppStore, isBookmarkVisibleInGroup } from '@/stores/appStore';
+import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
 import SortableBookmarkCard from './SortableBookmarkCard';
 import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft, Plus } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
@@ -329,7 +329,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <span>{g.icon || '📁'}</span>
-                    <span className="truncate">{g.name}</span>
+                    <span className="truncate">{getGroupDisplayName(g, lang)}</span>
                   </button>
                 ))}
             </div>
@@ -516,7 +516,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
                   className="context-menu-item"
                 >
                   <span>{g.icon || '📁'}</span>
-                  <span className="truncate">{g.name}</span>
+                  <span className="truncate">{getGroupDisplayName(g, lang)}</span>
                 </button>
               ))}
           </div>
