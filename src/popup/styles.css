@@ -1161,6 +1161,46 @@ body {
   margin: 4px 0;
 }
 
+/* ── Submenu (sibling, escapes parent overflow) ─────────────────── */
+.context-submenu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 200px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.context-submenu-header {
+  padding: 10px 14px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.context-submenu-list {
+  overflow-y: auto;
+  max-height: 320px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.context-submenu-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.context-submenu-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    EMPTY STATE
 ═══════════════════════════════════════════════════════════════════ */

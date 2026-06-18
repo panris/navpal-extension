@@ -503,23 +503,23 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-menu-divider" />
 
           {/* Groups */}
-          <div className="px-3 py-1.5">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-              {getText('moveTo', lang)}
-            </span>
+          <div className="context-submenu-header">
+            {getText('moveTo', lang)}
           </div>
-          {groups
-            .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
-            .map((g) => (
-              <button
-                key={g.id}
-                onClick={() => handleContextMoveTo(g.id)}
-                className="context-menu-item"
-              >
-                <span>{g.icon || '📁'}</span>
-                <span className="truncate">{g.name}</span>
-              </button>
-            ))}
+          <div className="context-submenu-list">
+            {groups
+              .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
+              .map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => handleContextMoveTo(g.id)}
+                  className="context-menu-item"
+                >
+                  <span>{g.icon || '📁'}</span>
+                  <span className="truncate">{g.name}</span>
+                </button>
+              ))}
+          </div>
 
           <div className="context-menu-divider" />
 
