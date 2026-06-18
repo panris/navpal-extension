@@ -56,6 +56,7 @@ const UI_TEXT = {
   editBookmarks: { zh: '编辑书签', en: 'Edit Bookmarks' },
   addHideDelete: { zh: '添加、隐藏或删除书签', en: 'Add, hide, or delete bookmarks' },
   addBookmark: { zh: '添加新书签', en: 'Add Bookmark' },
+  confirmAdd: { zh: '确认添加', en: 'Confirm' },
   bookmarkTitle: { zh: '书签标题', en: 'Title' },
   url: { zh: '网址', en: 'URL' },
   urlPlaceholder: { zh: '网址 https://...', en: 'URL https://...' },
@@ -101,11 +102,9 @@ const UI_TEXT = {
   tryAgain: { zh: '重试', en: 'Try Again' },
 
   // Region labels
-  regionAuto:  { zh: '自动（不区分语言）', en: 'Auto (all languages)' },
-  regionCN:    { zh: '🇨🇳', en: '🇨🇳' },
-  regionGlobal: { zh: '🌐', en: '🌐' },
-  descZhPlaceholder: { zh: '简介（中文，选填）', en: 'Description (Chinese, optional)' },
-  descEnPlaceholder: { zh: '简介（英文，选填）', en: 'Description (English, optional)' },
+  regionAuto: { zh: '自动（不区分语言）', en: 'Auto (language neutral)' },
+  regionCN: { zh: '🇨🇳', en: '🇨🇳' },
+  regionGlobal: { zh: '🌍', en: '🌍' },
 
   // Context menu / Bookmark grid
   copyUrl: { zh: '复制网址', en: 'Copy URL' },

@@ -5,7 +5,6 @@ import { normalizeUrl, autoDetectRegion } from '@/utils';
 import { ICON_GRADIENTS } from './BookmarkCard';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
-// Color gradients for icons
 function getGradientClass(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -16,12 +15,10 @@ function getGradientClass(id: string): string {
   return `bg-gradient-to-br ${ICON_GRADIENTS[index].bg}`;
 }
 
-// Truncate long text for display
 function truncate(text: string, maxLen: number): string {
   return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
 }
 
-// Validate URL with detailed feedback
 function validateUrl(url: string, lang: 'zh' | 'en'): { valid: boolean; message: string } {
   if (!url.trim()) return { valid: false, message: getText('pleaseEnterUrl', lang) };
   try {
@@ -61,16 +58,12 @@ export default function EditModal() {
 
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync selectedGroup with activeGroupId in group mode
-  // The component stays mounted even when returning null,
-  // so useState keeps the initial value forever without this.
   useEffect(() => {
     if (editMode === 'group' && activeGroupId) {
       setSelectedGroup(activeGroupId);
     }
   }, [activeGroupId, editMode]);
 
-  // Only show modal in edit modes
   if (editMode === 'none') return null;
 
   const handleUrlChange = (value: string) => {
@@ -90,14 +83,11 @@ export default function EditModal() {
       urlInputRef.current?.focus();
       return;
     }
-    if (!newTitle.trim()) {
-      return;
-    }
+    if (!newTitle.trim()) return;
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     const url = normalizeUrl(newUrl.trim());
-    const region = autoDetectRegion(url);
 
     addBookmark({
       title: newTitle.trim(),
@@ -131,141 +121,112 @@ export default function EditModal() {
     setUrlError('');
   };
 
-  const handleClose = () => {
-    setEditMode('none');
-  };
+  const handleClose = () => setEditMode('none');
 
-  const handleHide = (bookmarkId: string) => {
-    hideBookmarkGlobally(bookmarkId);
-  };
+  const handleHide = (bookmarkId: string) => hideBookmarkGlobally(bookmarkId);
+  const handleShow = (bookmarkId: string) => showBookmarkGlobally(bookmarkId);
+  const handleDelete = (bookmarkId: string) => deleteBookmarkGlobally(bookmarkId);
+  const handleRestore = (bookmarkId: string) => restoreBookmark(bookmarkId);
 
-  const handleShow = (bookmarkId: string) => {
-    showBookmarkGlobally(bookmarkId);
-  };
-
-  const handleDelete = (bookmarkId: string) => {
-    deleteBookmarkGlobally(bookmarkId);
-  };
-
-  const handleRestore = (bookmarkId: string) => {
-    restoreBookmark(bookmarkId);
-  };
-
-  // Filter bookmarks based on mode
   const visibleBookmarks = bookmarks.filter((b) => {
-    if (editMode === 'global') {
-      // Show all in global mode
-      return true;
-    }
-    if (editMode === 'group' && activeGroupId) {
-      // Show bookmarks in current group
-      return b.groupId === activeGroupId;
-    }
+    if (editMode === 'global') return true;
+    if (editMode === 'group' && activeGroupId) return b.groupId === activeGroupId;
     return true;
   });
 
   return (
-    <div
-      className="fixed inset-0 modal-overlay flex items-center justify-center z-50"
-      onClick={handleClose}
-    >
-      <div
-        className="modal-content w-[340px] max-h-[85vh] flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header-gradient px-6 py-5 text-white">
-          <div className="flex items-center justify-between">
+        <div className="modal-header-gradient">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <h2 className="text-lg font-bold">{getText('editBookmarks', lang)}</h2>
-              <p className="text-xs opacity-80 mt-0.5">
+              <h2>{getText('editBookmarks', lang)}</h2>
+              <p style={{ fontSize: '12px', opacity: 0.85, margin: '4px 0 0' }}>
                 {editMode === 'group' ? getText('groupEditHint', lang) : getText('globalEditHint', lang)}
               </p>
             </div>
-            <button
-              onClick={handleClose}
-              className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
-            >
-              <X className="w-5 h-5" />
+            <button className="modal-close-btn" onClick={handleClose}>
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        {/* Body */}
+        <div className="edit-modal-body">
           {/* Add Form */}
           {showAddForm ? (
-            <div className="space-y-3 mb-6 pb-6 border-b border-gray-100">
+            <div className="edit-form-divider">
               <input
                 type="text"
                 placeholder={getText('bookmarkTitle', lang)}
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900 placeholder-gray-500"
+                className="edit-form-field"
                 maxLength={60}
               />
-              <div className="relative">
+              <div style={{ position: 'relative', marginTop: '12px' }}>
                 <input
                   ref={urlInputRef}
                   type="text"
                   placeholder={getText('urlPlaceholder', lang)}
                   value={newUrl}
                   onChange={(e) => handleUrlChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddBookmark();
-                  }}
-                  className={`w-full px-4 py-3 pr-10 text-sm border rounded-xl focus:outline-none focus:ring-2 transition-all bg-white text-gray-900 placeholder-gray-500 ${
-                    urlError
-                      ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
-                      : 'border-gray-300 focus:border-violet-500 focus:ring-violet-100'
-                  }`}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddBookmark(); }}
+                  className={`edit-form-field${urlError ? ' error' : ''}`}
+                  style={{ paddingRight: '36px' }}
                 />
                 {urlError && (
-                  <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400" />
+                  <AlertCircle
+                    size={16}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--danger-color)', pointerEvents: 'none' }}
+                  />
                 )}
               </div>
               {urlError && (
-                <p className="text-xs text-red-500 flex items-center gap-1 -mt-1">
-                  <AlertCircle className="w-3 h-3" />
+                <p className="edit-form-error">
+                  <AlertCircle size={12} />
                   {urlError}
                 </p>
               )}
-              {/* Description (optional) */}
               <textarea
-                placeholder={getText('descZhPlaceholder', lang) || '简介（中文，选填）'}
+                placeholder={getText('chineseDesc', lang)}
                 value={newDescZh}
                 onChange={(e) => setNewDescZh(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none bg-white text-gray-900 placeholder-gray-500"
+                className="edit-form-field"
+                style={{ resize: 'none', marginTop: '12px' }}
                 rows={2}
                 maxLength={200}
               />
               <textarea
-                placeholder={getText('descEnPlaceholder', lang) || 'Description (English, optional)'}
+                placeholder={getText('englishDesc', lang)}
                 value={newDescEn}
                 onChange={(e) => setNewDescEn(e.target.value)}
-                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none bg-white text-gray-900 placeholder-gray-500"
+                className="edit-form-field"
+                style={{ resize: 'none', marginTop: '12px' }}
                 rows={2}
                 maxLength={400}
               />
-              {/* Region selector */}
               <select
                 value={newRegion ?? ''}
                 onChange={(e) => setNewRegion(e.target.value ? (e.target.value as 'CN' | 'Global') : null)}
-                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900"
+                className="edit-form-select"
+                style={{ marginTop: '12px' }}
               >
-                <option value="">{getText('regionAuto', lang) || '自动（不区分语言）'}</option>
-                <option value="CN">{getText('regionCN', lang) || '🇨🇳 国内专用'}</option>
-                <option value="Global">{getText('regionGlobal', lang) || '🌐 全球通用'}</option>
+                <option value="">{getText('regionAuto', lang)}</option>
+                <option value="CN">{getText('regionCN', lang)}</option>
+                <option value="Global">{getText('regionGlobal', lang)}</option>
               </select>
               {editMode === 'group' ? (
-                <div className="px-3 py-2 text-sm text-gray-700 bg-white rounded-lg border border-gray-300">
+                <div className="edit-form-group-display" style={{ marginTop: '12px' }}>
                   {groups.find((g) => g.id === activeGroupId)?.name || ''}
                 </div>
               ) : (
                 <select
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all bg-white text-gray-900"
+                  className="edit-form-select"
+                  style={{ marginTop: '12px' }}
                 >
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
@@ -274,18 +235,17 @@ export default function EditModal() {
                   ))}
                 </select>
               )}
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
                 <button
                   onClick={handleAddBookmark}
                   disabled={isSubmitting || !!urlError || !newTitle.trim() || !newUrl.trim()}
-                  className="btn-primary flex-1 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="edit-btn-add"
+                  style={{ flex: 1 }}
                 >
+                  <Plus size={16} />
                   {isSubmitting ? getText('addInProgress', lang) : getText('addBookmark', lang)}
                 </button>
-                <button
-                  onClick={handleCloseForm}
-                  className="px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                >
+                <button onClick={handleCloseForm} className="edit-btn-cancel">
                   {getText('cancel', lang)}
                 </button>
               </div>
@@ -293,86 +253,75 @@ export default function EditModal() {
           ) : (
             <button
               onClick={() => setShowAddForm(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-6 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl hover:shadow-lg transition-all"
+              className="edit-add-trigger"
             >
-              <Plus className="w-5 h-5" />
+              <Plus size={18} />
               {getText('addBookmark', lang)}
             </button>
           )}
 
           {/* Bookmark List */}
-          <div className="space-y-2">
+          <div>
             {visibleBookmarks.map((bookmark) => {
-              const isDeleted = bookmark.deletedAt !== null && bookmark.deletedAt !== undefined;
+              const isDeleted = bookmark.deletedAt != null;
               const isHidden = bookmark.hidden;
 
               return (
                 <div
                   key={bookmark.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    isDeleted ? 'bg-red-50 opacity-60' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`bookmark-row${isDeleted ? ' deleted' : ''}`}
                 >
-                  {/* Icon */}
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0 ${getGradientClass(bookmark.id)}`}
-                  >
+                  <div className={`bookmark-row-icon ${getGradientClass(bookmark.id)}`}>
                     {truncate(bookmark.title, 1)}
                   </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-gray-900 truncate" title={bookmark.title}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="bookmark-row-title" title={bookmark.title}>
                       {truncate(bookmark.title, 20)}
                     </div>
-                    <div className="text-xs text-gray-500 truncate" title={bookmark.url}>
+                    <div className="bookmark-row-url" title={bookmark.url}>
                       {truncate(bookmark.url.replace('https://', '').replace('http://', ''), 30)}
                     </div>
-                    {/* Status badges */}
                     {isDeleted && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-red-600 font-medium">
-                        <Trash2 className="w-3 h-3" />
+                      <span className="badge-deleted">
+                        <Trash2 size={11} />
                         {getText('deletedBadge', lang)}
                       </span>
                     )}
                     {isHidden && !isDeleted && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-medium">
+                      <span className="badge-hidden">
                         <span>🔒</span>
                         {getText('hideAction', lang)}
                       </span>
                     )}
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {/* Restore (for deleted) or Show (for hidden) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                     {(isDeleted || isHidden) ? (
                       <button
                         onClick={() => isDeleted ? handleRestore(bookmark.id) : handleShow(bookmark.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-100 transition-colors"
+                        className="row-action-btn restore"
                         title={isDeleted ? getText('restore', lang) : getText('show', lang)}
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw size={15} />
                       </button>
                     ) : (
                       <button
                         onClick={() => handleHide(bookmark.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 hover:bg-amber-100 transition-colors"
+                        className="row-action-btn hide"
                         title={getText('hideAction', lang)}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242" />
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
                         </svg>
                       </button>
                     )}
-                    {/* Delete (only in global mode) */}
                     {editMode === 'global' && !isDeleted && (
                       <button
                         onClick={() => handleDelete(bookmark.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-100 transition-colors"
+                        className="row-action-btn delete"
                         title={getText('deleteAction', lang)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={15} />
                       </button>
                     )}
                   </div>
