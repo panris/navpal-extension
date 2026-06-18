@@ -86,7 +86,8 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
     if (!groupEdit) return;
     const name = groupEdit.name.trim();
     if (!name) return;
-    addGroup(name, groupEdit.emoji);
+    const nameI18n = { zh: lang === 'zh' ? name : '', en: lang === 'en' ? name : '' };
+    addGroup(name, groupEdit.emoji, nameI18n);
     setGroupEdit(null);
   };
 
@@ -94,7 +95,10 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
     if (!groupEdit?.id) return;
     const name = groupEdit.name.trim();
     if (!name) return;
-    updateGroup(groupEdit.id, { name, icon: groupEdit.emoji });
+    const group = groups.find((g) => g.id === groupEdit.id);
+    const existing = group?.nameI18n || { zh: '', en: '' };
+    const nameI18n = { ...existing, [lang]: name };
+    updateGroup(groupEdit.id, { name, icon: groupEdit.emoji, nameI18n });
     setGroupEdit(null);
   };
 
@@ -127,7 +131,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
       updateSettings({ ...data!.settings });
       const existingIds = new Set(groups.map((g) => g.id));
       data!.groups.forEach((g) => {
-        if (!existingIds.has(g.id)) addGroup(g.name, g.icon);
+        if (!existingIds.has(g.id)) addGroup(g.name, g.icon, g.nameI18n);
       });
       setImportMsg(getText('importSuccess', lang));
       setTimeout(() => setImportMsg(''), 3000);
@@ -303,7 +307,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                       </div>
                       <div className="flex gap-1" style={{ opacity: 0 }}>
                         <button
-                          onClick={() => setGroupEdit({ id: group.id, name: group.name, emoji: group.icon || '📁' })}
+                          onClick={() => setGroupEdit({ id: group.id, name: group.nameI18n?.[lang] || group.name, emoji: group.icon || '📁' })}
                           className="w-7 h-7 flex items-center justify-center rounded"
                           style={{ color: 'var(--accent-color)' }}
                         >

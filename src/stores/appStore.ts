@@ -130,11 +130,12 @@ export const useAppStore = create<
       toggleEditMode: () => set((state) => ({ editMode: state.editMode === 'none' ? 'group' : 'none' })),
 
       // 分组操作
-      addGroup: (name, icon) => {
+      addGroup: (name, icon, nameI18n?) => {
         const { groups } = get();
         const newGroup: Group = {
           id: generateId(),
           name,
+          nameI18n,
           icon,
           hidden: false,
           order: groups.length,
