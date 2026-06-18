@@ -75,6 +75,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     x: number;
     y: number;
     flipped: boolean;
+    maxHeight: number;
   } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [showBatchBar, setShowBatchBar] = useState(false);
@@ -213,8 +214,11 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const handleContextMenu = (e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
     const x = Math.min(e.clientX, window.innerWidth - 200);
-    const flipped = e.clientY > window.innerHeight - 250;
-    setContextMenu({ bookmarkId, x, y: flipped ? e.clientY : e.clientY, flipped });
+    const menuHeight = 420; // approximate total height of context menu items
+    const flipped = e.clientY + menuHeight > window.innerHeight - 8;
+    const availableBelow = flipped ? e.clientY : window.innerHeight - e.clientY;
+    const maxHeight = Math.min(menuHeight, availableBelow - 8);
+    setContextMenu({ bookmarkId, x, y: e.clientY, flipped, maxHeight: Math.max(120, maxHeight) });
   };
 
   // Context menu actions
@@ -479,6 +483,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
             left: contextMenu.x,
             top: contextMenu.flipped ? undefined : contextMenu.y,
             bottom: contextMenu.flipped ? window.innerHeight - contextMenu.y : undefined,
+            maxHeight: contextMenu.maxHeight,
           }}
           onMouseDown={(e) => e.stopPropagation()}
         >
