@@ -5,13 +5,9 @@ import SettingsMenu from './SettingsMenu';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
 interface HeaderProps {
-  onMinimize?: () => void;
-  onMaximize?: () => void;
-  onRestore?: () => void;
-  isMinimized?: boolean;
 }
 
-export default function Header({ onMinimize, onMaximize, onRestore, isMinimized }: HeaderProps) {
+export default function Header() {
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const isRevealMode = useAppStore((state) => state.isRevealMode);
@@ -42,12 +38,14 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
 
         {/* Actions */}
         <div className="header-actions">
-          <SettingsMenu
-            onMinimize={onMinimize}
-            onMaximize={onMaximize}
-            onRestore={onRestore}
-            isMinimized={isMinimized}
-          />
+          <button
+            onClick={() => window.close()}
+            className="header-btn"
+            title="Close"
+          >
+            ✕
+          </button>
+          <SettingsMenu />
         </div>
       </div>
 

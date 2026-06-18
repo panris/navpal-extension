@@ -20,10 +20,6 @@ function getGroupIcon(icon: string | undefined): React.ReactNode {
 }
 
 interface SettingsMenuProps {
-  onMinimize?: () => void;
-  onMaximize?: () => void;
-  onRestore?: () => void;
-  isMinimized?: boolean;
 }
 
 const GROUP_EMOJIS = ['🤖', '💻', '🎨', '📋', '🎬', '🔧', '🎵', '🌐', '📁', '⭐'];
@@ -41,7 +37,7 @@ interface GroupEditState {
   emoji: string;
 }
 
-export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMinimized }: SettingsMenuProps) {
+export default function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<'main' | 'groups' | 'data'>('main');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -203,23 +199,6 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                     <span className="theme-name">{t.preview} {t.name}</span>
                   </button>
                 ))}
-              </div>
-
-              {/* Window Controls */}
-              <p className="settings-section-title" style={{ marginTop: '16px' }}>{getText('windowControls', lang)}</p>
-              <div className="settings-row">
-                <button
-                  onClick={() => { isMinimized ? onRestore?.() : onMinimize?.(); setIsOpen(false); }}
-                  className="settings-btn"
-                >
-                  {isMinimized ? getText('expand', lang) : getText('minimize', lang)}
-                </button>
-                <button
-                  onClick={() => { onMaximize?.(); setIsOpen(false); }}
-                  className="settings-btn"
-                >
-                  {getText('maximize', lang)}
-                </button>
               </div>
 
               {/* Language */}
