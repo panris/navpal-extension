@@ -1186,7 +1186,7 @@ body {
 
 .context-submenu-list {
   overflow-y: auto;
-  max-height: 320px;
+  max-height: min(320px, calc(100vh - 200px));
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
@@ -1199,6 +1199,11 @@ body {
 .context-submenu-list::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 2px;
+}
+
+/* ── Inline group list (no overflow, parent .context-menu handles scroll) ── */
+.context-group-list {
+  /* intentionally no overflow/max-height — parent handles scrolling */
 }
 
 /* ═══════════════════════════════════════════════════════════════════

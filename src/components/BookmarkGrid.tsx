@@ -506,7 +506,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-submenu-header">
             {getText('moveTo', lang)}
           </div>
-          <div className="context-submenu-list">
+          <div className="context-group-list">
             {groups
               .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
               .map((g) => (
