@@ -1,13 +1,16 @@
+import { useCurrentLang, getText } from '@/utils/i18n';
+
 interface ResizeHandleProps {
   onMouseDown: (e: React.MouseEvent) => void;
 }
 
 export default function ResizeHandle({ onMouseDown }: ResizeHandleProps) {
+  const lang = useCurrentLang();
   return (
     <div
       className="resize-handle"
       onMouseDown={onMouseDown}
-      title="拖拽调整大小"
+      title={getText('resizeHint', lang)}
     >
       <svg
         width="14"

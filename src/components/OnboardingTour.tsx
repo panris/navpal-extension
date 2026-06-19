@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore, subscribeHydration } from '@/stores/appStore';
 import { useCurrentLang } from '@/utils/i18n';
 

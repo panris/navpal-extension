@@ -119,7 +119,6 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     }
     return true;
     });
-    console.log('[NavPal DBG] BookmarkGrid useMemo: input bookmarks:', bookmarks.length, 'filtered:', result.length, 'editMode:', editMode, 'activeGroupId:', activeGroupId, 'lang:', lang);
     return result;
   }, [bookmarks, lang, editMode, activeGroupId, isRevealMode, searchQuery]);
 

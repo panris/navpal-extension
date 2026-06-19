@@ -171,7 +171,6 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   // Action handlers based on edit mode
   const handleHide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[NavPal] handleHide called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       updateBookmark(bookmark.id, {
         groupHidden: { ...bookmark.groupHidden, [groupId]: true }
@@ -183,7 +182,6 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
 
   const handleShow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[NavPal] handleShow called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       const newGroupHidden = { ...bookmark.groupHidden };
       delete newGroupHidden[groupId];
@@ -195,7 +193,6 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[NavPal] handleDelete called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'group') {
       deleteBookmarkFromGroup(bookmark.id, groupId);
     } else if (editMode === 'global') {
@@ -205,7 +202,6 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
 
   const handleRestore = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[NavPal] handleRestore called, editMode:', editMode, 'bookmarkId:', bookmark.id);
     if (editMode === 'global') {
       restoreBookmark(bookmark.id);
     }
@@ -221,7 +217,8 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
         {isCardHidden || isGloballyDeleted ? (
           <button
             onClick={isGloballyDeleted ? handleRestore : handleShow}
-            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-emerald-600"
+            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm"
+              style={{ color: 'var(--success-color)' }}
           >
             <RotateCcw className="w-4 h-4" />
             {isGloballyDeleted ? getText('restore', lang) : getText('showInGroup', lang)}
@@ -229,7 +226,8 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
         ) : (
           <button
             onClick={handleHide}
-            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-600"
+            className="context-menu-item flex items-center gap-2 w-full px-3 py-2 text-sm"
+            style={{ color: 'var(--warning-color)' }}
           >
             {editMode === 'group' ? <EyeOff className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
             {editMode === 'group' ? getText('hideFromGroup', lang) : getText('hideAction', lang)}
@@ -279,10 +277,10 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
               'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
               isSelected
                 ? 'bg-violet-500 border-violet-500'
-                : 'bg-white border-gray-300 hover:border-violet-400'
+                :               'bg-white border-gray-300 dark:bg-gray-700 dark:border-gray-600 hover:border-violet-400 dark:hover:border-violet-400'
             )}>
               {isSelected && (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               )}
@@ -292,19 +290,19 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
         {/* Status Badges */}
         {(isGloballyDeleted || isGroupDeleted) && (
           <div className="absolute top-1 right-1 z-10">
-            <span className="px-1.5 py-0.5 text-[8px] font-bold bg-red-500 text-white rounded">
+            <span className="px-1.5 py-0.5 text-[8px] font-bold rounded" style={{ background: 'var(--danger-color)', color: 'white' }}>
               {getText('deletedBadge', lang)}
             </span>
           </div>
         )}
         {isGloballyHidden && !isGloballyDeleted && (
           <div className="absolute top-1 right-1 z-10">
-            <Lock className="w-3 h-3 text-gray-400" />
+            <Lock className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
           </div>
         )}
         {isGroupHidden && !isGloballyHidden && !isGroupDeleted && (
           <div className="absolute top-1 right-1 z-10">
-            <EyeOff className="w-3 h-3 text-amber-400" />
+            <EyeOff className="w-3 h-3" style={{ color: 'var(--warning-color)' }} />
           </div>
         )}
 
@@ -354,12 +352,12 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
         </div>
 
         {/* Title */}
-        <span className="text-xs font-semibold text-gray-900 text-center truncate w-full mb-0.5">
+        <span className="text-xs font-semibold text-center truncate w-full mb-0.5" style={{ color: 'var(--text-primary)' }}>
           {bookmark.title}
         </span>
 
         {/* Domain Subtle */}
-        <span className="text-[10px] text-gray-400 truncate max-w-full px-1">
+        <span className="text-[10px] truncate max-w-full px-1" style={{ color: 'var(--text-muted)' }}>
           {getDomain(bookmark.url)}
         </span>
       </button>

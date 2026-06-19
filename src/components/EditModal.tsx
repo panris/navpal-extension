@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
-import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
+import { useAppStore } from '@/stores/appStore';
 import { ICON_GRADIENTS } from './BookmarkCard';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import AddBookmarkModal from './AddBookmarkModal';
@@ -26,7 +26,6 @@ export default function EditModal() {
   const restoreBookmark = useAppStore((s) => s.restoreBookmark);
   const hideBookmarkGlobally = useAppStore((s) => s.hideBookmarkGlobally);
   const showBookmarkGlobally = useAppStore((s) => s.showBookmarkGlobally);
-  const groups = useAppStore((s) => s.groups);
   const bookmarks = useAppStore((s) => s.bookmarks);
   const activeGroupId = useAppStore((s) => s.activeGroupId);
   const lang = useCurrentLang();

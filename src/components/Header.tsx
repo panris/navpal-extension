@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Search, Settings } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import SettingsMenu from './SettingsMenu';
 import { useCurrentLang, getText } from '@/utils/i18n';
@@ -14,7 +14,6 @@ interface HeaderProps {
 export default function Header({ onMinimize, onMaximize, onRestore, isMinimized }: HeaderProps) {
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
-  const isRevealMode = useAppStore((state) => state.isRevealMode);
   const lang = useCurrentLang();
   const searchRef = useRef<HTMLInputElement>(null);
 

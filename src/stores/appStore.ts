@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AppState, Group, Bookmark, EditMode } from '@/types';
-import { generateId, autoDetectRegion } from '@/utils';
+import { generateId } from '@/utils';
 import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/seedData';
 import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
 import type { LangPref } from '@/components/BookmarkCard';
@@ -193,27 +193,13 @@ export const useAppStore = create<
         const quota = checkStorageQuota({ groups: state.groups, bookmarks: newBookmarks, settings: state.settings });
         if (!quota.allowed) {
           console.warn(`[NavPal] Storage quota exceeded: ${quota.usedKB.toFixed(1)}KB / ${STORAGE_QUOTA_KB}KB`);
-          alert(`存储空间不足 (${quota.percent.toFixed(0)}%)，请清理部分书签后重试。`);
+          window.dispatchEvent(new CustomEvent('navpal:storage-full', { detail: { percent: quota.percent } }));
           return;
         }
         if (quota.percent >= STORAGE_WARN_RATIO * 100) {
           console.warn(`[NavPal] Storage warning: ${quota.percent.toFixed(0)}% used`);
         }
-        console.log('[NavPal v022923d] addBookmark:', newBookmark.id, 'groupId:', newBookmark.groupId, 'title:', newBookmark.title, 'total:', newBookmarks.length);
         set({ bookmarks: newBookmarks });
-        // Verify: log store state immediately after set
-        setTimeout(() => {
-          const afterState = get();
-          console.log('[NavPal v022923d] after set, store bookmarks:', afterState.bookmarks.length, 'last bookmark:', afterState.bookmarks[afterState.bookmarks.length - 1]?.title);
-          // Also check localStorage
-          try {
-            const stored = localStorage.getItem('navpal-storage');
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              console.log('[NavPal v022923d] localStorage bookmarks:', parsed.state?.bookmarks?.length);
-            }
-          } catch(e) { console.error('[NavPal v022923d] localStorage check failed', e); }
-        }, 100);
       },
 
       updateBookmark: (id, updates) => {
@@ -301,7 +287,7 @@ export const useAppStore = create<
       },
 
       // 彻底删除书签（不可恢复）
-      hardDeleteBookmark: (id) => {
+      hardDeleteBookmark: (id: string) => {
         set((state) => ({
           bookmarks: state.bookmarks.filter((b) => b.id !== id),
         }));

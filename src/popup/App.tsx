@@ -14,13 +14,6 @@ import { useResizable } from '@/hooks/useResizable';
 
 type ViewMode = 'default' | 'minimized';
 
-function formatTime(): string {
-  const now = new Date();
-  const h = now.getHours().toString().padStart(2, '0');
-  const m = now.getMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
-}
-
 
 export default function App() {
   const isRevealMode = useAppStore((s) => s.isRevealMode);
@@ -34,7 +27,15 @@ export default function App() {
   const lang = useCurrentLang();
 
   const [viewMode, setViewMode] = useState<ViewMode>('default');
+  const [storageFull, setStorageFull] = useState(false);
   const prevSizeRef = useRef<{ w: number; h: number } | null>(null);
+
+  // Listen for storage-full event from store
+  useEffect(() => {
+    const handler = () => setStorageFull(true);
+    window.addEventListener('navpal:storage-full', handler);
+    return () => window.removeEventListener('navpal:storage-full', handler);
+  }, []);
 
   // ── Resizable popup ─────────────────────────────────────────────
   const { width, height, isResizing, handleMouseDown, resizeTo } = useResizable({
@@ -75,8 +76,6 @@ export default function App() {
   const filteredBookmarks = activeGroupId
     ? bookmarks.filter((b) => b.groupId === activeGroupId)
     : bookmarks;
-  console.log('[NavPal DBG] App: visibleBookmarks:', bookmarks.length, 'filteredByGroup:', filteredBookmarks.length, 'activeGroupId:', activeGroupId);
-
   // ── Window controls ──────────────────────────────────────────
   /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
   const handleMinimize = () => setViewMode('minimized');
@@ -137,6 +136,17 @@ export default function App() {
         height: containerHeight,
       }}
     >
+      {/* Storage warning banner */}
+      {storageFull && (
+        <div
+          className="px-4 py-2 text-xs text-center font-medium"
+          style={{ background: 'var(--warning-color)', color: 'white' }}
+          onClick={() => setStorageFull(false)}
+        >
+          {lang === 'zh' ? '存储空间不足，请清理部分书签' : 'Storage full — please remove some bookmarks'}
+        </div>
+      )}
+
       {/* ── Minimized: compact bar only ─────────────────────────── */}
       {viewMode === 'minimized' ? (
         <div className="flex items-center justify-center flex-1 px-4 gap-3">

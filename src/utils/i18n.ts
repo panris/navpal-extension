@@ -10,6 +10,7 @@ const UI_TEXT = {
   // Header
   appName: { zh: '伴航', en: 'NavPal' },
   appTagline: { zh: '快捷导航工作台', en: 'Quick Navigation Hub' },
+  resizeHint: { zh: '拖拽调整大小', en: 'Drag to resize' },
   searchPlaceholder: { zh: '搜索书签...', en: 'Search bookmarks...' },
   revealMode: { zh: '全量', en: 'All' },
   revealModeLabel: { zh: '全量模式', en: 'All Mode' },
@@ -50,6 +51,7 @@ const UI_TEXT = {
   importSuccess: { zh: '导入成功！', en: 'Import successful!' },
   importFailed: { zh: '导入失败', en: 'Import failed' },
   delete: { zh: '删除', en: 'Delete' },
+  deleteGroup: { zh: '删除分组', en: 'Delete Group' },
   edit: { zh: '编辑', en: 'Edit' },
 
   // Edit Modal

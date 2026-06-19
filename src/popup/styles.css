@@ -1219,9 +1219,21 @@ body {
   border-radius: 2px;
 }
 
-/* ── Inline group list (no overflow, parent .context-menu handles scroll) ── */
+/* ── Inline group list in context menu ── */
 .context-group-list {
-  /* intentionally no overflow/max-height — parent handles scrolling */
+  overflow-y: auto;
+  max-height: min(280px, calc(100vh - 200px));
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.context-group-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.context-group-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

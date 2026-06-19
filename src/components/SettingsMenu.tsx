@@ -4,6 +4,7 @@ import { cn } from '@/utils/cn';
 import { useAppStore, type ThemeName, getGroupDisplayName } from '@/stores/appStore';
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
 import { useCurrentLang, getText, LANG_OPTIONS, getLangOptionLabel } from '@/utils/i18n';
+import ConfirmModal from './ConfirmModal';
 import type { LangPref } from './BookmarkCard';
 
 function getGroupIcon(icon: string | undefined): React.ReactNode {
@@ -62,6 +63,8 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
 
   const [groupEdit, setGroupEdit] = useState<GroupEditState | null>(null);
   const [importMsg, setImportMsg] = useState('');
+  const [importMsgType, setImportMsgType] = useState<'success' | 'error' | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; count: number } | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -104,10 +107,12 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
 
   const handleDeleteGroup = (id: string) => {
     const count = bookmarks.filter((b) => b.groupId === id).length;
-    const msg = lang === 'zh'
-      ? `分组下有 ${count} 个书签，确定删除？`
-      : `This group has ${count} bookmarks. Delete anyway?`;
-    if (count > 0 && !confirm(msg)) return;
+    const group = groups.find((g) => g.id === id);
+    const name = group ? getGroupDisplayName(group, lang) : id;
+    if (count > 0) {
+      setDeleteConfirm({ id, name, count });
+      return;
+    }
     deleteGroup(id);
     setGroupEdit(null);
   };
@@ -125,7 +130,8 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
       if (!valid) {
         const msg = lang === 'zh' ? `导入失败: ${error}` : `Import failed: ${error}`;
         setImportMsg(msg);
-        setTimeout(() => setImportMsg(''), 3000);
+        setImportMsgType('error');
+        setTimeout(() => { setImportMsg(''); setImportMsgType(null); }, 3000);
         return;
       }
       updateSettings({ ...data!.settings });
@@ -133,12 +139,14 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
       data!.groups.forEach((g) => {
         if (!existingIds.has(g.id)) addGroup(g.name, g.icon, g.nameI18n);
       });
-      setImportMsg(getText('importSuccess', lang));
-      setTimeout(() => setImportMsg(''), 3000);
+      setImportMsg(getText('importSuccess', lang) as string);
+      setImportMsgType('success');
+      setTimeout(() => { setImportMsg(''); setImportMsgType(null); }, 3000);
     } catch {
       const msg = lang === 'zh' ? '导入失败，请检查文件格式' : 'Import failed, please check file format';
       setImportMsg(msg);
-      setTimeout(() => setImportMsg(''), 3000);
+      setImportMsgType('error');
+      setTimeout(() => { setImportMsg(''); setImportMsgType(null); }, 3000);
     }
   }, [groups, addGroup, updateSettings, lang]);
 
@@ -363,7 +371,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                   <span className="ml-auto text-xs" style={{ color: 'var(--text-muted)' }}>JSON</span>
                 </button>
                 {importMsg && (
-                  <p className={cn('mt-2 text-xs font-medium', importMsg.includes('成功') || importMsg.includes('successful') ? 'text-green-600' : 'text-red-500')}>
+                  <p className="mt-2 text-xs font-medium" style={{ color: importMsgType === 'success' ? 'var(--success-color)' : 'var(--danger-color)' }}>
                     {importMsg}
                   </p>
                 )}
@@ -371,6 +379,23 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
             </div>
           )}
         </div>
+      )}
+      {deleteConfirm && (
+        <ConfirmModal
+          title={getText('deleteGroup', lang) as string}
+          message={
+            lang === 'zh'
+              ? `「${deleteConfirm.name}」下有 ${deleteConfirm.count} 个书签，删除后书签将保留在「全部」分组。`
+              : `"${deleteConfirm.name}" has ${deleteConfirm.count} bookmark(s). Deleting the group will move them to "All".`
+          }
+          confirmLabel={getText('deleteAction', lang)}
+          onConfirm={() => {
+            deleteGroup(deleteConfirm.id);
+            setGroupEdit(null);
+            setDeleteConfirm(null);
+          }}
+          onCancel={() => setDeleteConfirm(null)}
+        />
       )}
     </div>
   );
