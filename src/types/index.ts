@@ -98,7 +98,7 @@ export interface AppState {
   toggleEditMode: () => void;
 
   // 分组操作
-  addGroup: (name: string, icon?: string) => void;
+  addGroup: (name: string, icon?: string, nameI18n?: { zh: string; en: string }) => void;
   updateGroup: (id: string, updates: Partial<Group>) => void;
   deleteGroup: (id: string) => void;
   reorderGroups: (groupIds: string[]) => void;

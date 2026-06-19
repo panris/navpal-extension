@@ -52,7 +52,7 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
       </div>
 
       {/* Search */}
-      <div className="header-search">
+      <div className="header-search" data-tour="search">
         <Search className="search-icon" size={16} />
         <input
           ref={searchRef}

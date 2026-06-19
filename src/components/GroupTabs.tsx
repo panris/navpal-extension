@@ -48,7 +48,7 @@ export default function GroupTabs() {
   const visibleGroups = groups.filter((g) => !g.hidden || isRevealMode);
 
   return (
-    <div className="group-tabs">
+    <div className="group-tabs" data-tour="groups">
       <div className="tabs-scroll">
         {/* All Tab */}
         <button

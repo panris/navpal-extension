@@ -299,13 +299,13 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                 {groups.map((group) => {
                   const count = bookmarks.filter((b) => b.groupId === group.id).length;
                   return (
-                    <div key={group.id} className="flex items-center gap-2 px-3 py-2 rounded-lg group" style={{ hover: { background: 'var(--bg-hover)' } }}>
+                    <div key={group.id} className="settings-group-row">
                       <span className="text-base">{getGroupIcon(group.icon)}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{getGroupDisplayName(group, lang)}</div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{count} {getText('groupCount', lang)}</div>
                       </div>
-                      <div className="flex gap-1" style={{ opacity: 0 }}>
+                      <div className="group-actions flex gap-1">
                         <button
                           onClick={() => setGroupEdit({ id: group.id, name: group.nameI18n?.[lang] || group.name, emoji: group.icon || '📁' })}
                           className="w-7 h-7 flex items-center justify-center rounded"

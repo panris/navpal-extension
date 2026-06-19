@@ -31,7 +31,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="flex items-center justify-between">
-        <div className="footer-stats">
+        <div className="footer-stats" data-tour="reveal">
           📌 {visibleCount} {getText('bookmarks', lang)}
           {hiddenCount > 0 && !isRevealMode && (
             <span className="ml-2" style={{ color: 'var(--warning-color)' }}>

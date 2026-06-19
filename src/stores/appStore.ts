@@ -18,7 +18,7 @@ export function subscribeTheme(listener: ThemeListener): () => void {
   return () => themeListeners.delete(listener);
 }
 
-function notifyThemeChange(theme: ThemeName) {
+export function notifyThemeChange(theme: ThemeName) {
   // Apply theme to document
   document.documentElement.setAttribute('data-theme', theme);
   themeListeners.forEach((l) => l(theme));
