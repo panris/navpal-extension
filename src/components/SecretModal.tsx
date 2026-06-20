@@ -118,17 +118,23 @@ export default function SecretModal() {
         <div className="p-6">
           {/* Attempts Warning */}
           {remaining <= 1 && remaining > 0 && (
-            <div className="flex items-center gap-2 justify-center mb-4 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
-              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <p className="text-xs text-amber-700 font-medium">
+            <div
+              className="flex items-center gap-2 justify-center mb-4 px-3 py-2 rounded-lg border"
+              style={{ background: 'var(--warning-light)', borderColor: 'var(--warning-color)' }}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--warning-color)' }} />
+              <p className="text-xs font-medium" style={{ color: 'var(--warning-color)' }}>
                 {lockWarningText}
               </p>
             </div>
           )}
           {remaining <= 0 && (
-            <div className="flex items-center gap-2 justify-center mb-4 px-3 py-2 bg-red-50 rounded-lg border border-red-200">
-              <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-              <p className="text-xs text-red-700 font-medium">{lockedText}</p>
+            <div
+              className="flex items-center gap-2 justify-center mb-4 px-3 py-2 rounded-lg border"
+              style={{ background: 'var(--danger-light)', borderColor: 'var(--danger-color)' }}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--danger-color)' }} />
+              <p className="text-xs font-medium" style={{ color: 'var(--danger-color)' }}>{lockedText}</p>
             </div>
           )}
 

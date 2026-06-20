@@ -343,10 +343,10 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
 
             {/* Region Indicator */}
             <div
-              className={cn(
-                'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white',
-                bookmark.region === 'CN' ? 'bg-red-500' : 'bg-blue-500'
-              )}
+              className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white"
+              style={{
+                background: bookmark.region === 'CN' ? 'var(--region-cn)' : 'var(--region-global)',
+              }}
             />
           </div>
         </div>
@@ -395,8 +395,8 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
             </div>
           )}
           <div className="flex items-center gap-2 mt-3 px-2.5 py-1.5 text-xs font-semibold rounded-lg" style={{
-            background: bookmark.region === 'CN' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-            color: bookmark.region === 'CN' ? '#dc2626' : '#2563eb',
+            background: bookmark.region === 'CN' ? 'var(--region-cn-bg)' : 'var(--region-global-bg)',
+            color: bookmark.region === 'CN' ? 'var(--region-cn)' : 'var(--region-global)',
           }}>
             <span>{bookmark.region === 'CN' ? getText('regionCN', lang) : getText('regionGlobal', lang)}</span>
             <span>{getRegionLabel()}</span>

@@ -68,8 +68,8 @@ function SortableBookmarkCardInner({
 }
 
 export default memo(SortableBookmarkCardInner, (prev, next) => {
-  // Re-render when editMode changes to show/hide action buttons
   return prev.bookmark.id === next.bookmark.id &&
+    prev.groupId === next.groupId &&
     prev.isDragging === next.isDragging &&
     prev.isSelected === next.isSelected;
 });
