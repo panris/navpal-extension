@@ -162,9 +162,10 @@ export const useAppStore = create<
 
       reorderGroups: (groupIds) => {
         set((state) => ({
-          groups: groupIds.map((id, index) => {
-            const group = state.groups.find((g) => g.id === id)!;
-            return { ...group, order: index, updatedAt: Date.now() };
+          groups: state.groups.map((group) => {
+            const newOrder = groupIds.indexOf(group.id);
+            if (newOrder === -1) return group;
+            return { ...group, order: newOrder, updatedAt: Date.now() };
           }),
         }));
       },
@@ -250,6 +251,11 @@ export const useAppStore = create<
         });
       },
 
+      // 替换全部书签（导入时使用）
+      replaceAllBookmarks: (bookmarks: Bookmark[]) => {
+        set({ bookmarks });
+      },
+
       // 全局隐藏书签（全局编辑模式）
       hideBookmarkGlobally: (id) => {
         set((state) => ({
@@ -324,9 +330,12 @@ export const useAppStore = create<
       onRehydrateStorage: () => (state) => {
         if (state) {
           const migrated = migrateData(state as unknown as { groups: Group[]; bookmarks: Bookmark[]; settings: { schemaVersion?: number } });
-          state.groups = migrated.groups;
-          state.bookmarks = migrated.bookmarks;
-          state.settings = migrated.settings as AppState['settings'];
+          // Use setState (static) instead of direct mutation to respect Zustand immutability
+          useAppStore.setState({
+            groups: migrated.groups,
+            bookmarks: migrated.bookmarks,
+            settings: migrated.settings as AppState['settings'],
+          });
           // Apply theme on load
           const theme = (state as unknown as { theme?: ThemeName }).theme || 'light';
           setTimeout(() => notifyThemeChange(theme), 0);

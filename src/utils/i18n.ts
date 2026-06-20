@@ -83,6 +83,9 @@ const UI_TEXT = {
   groupEditMode: { zh: '分组编辑', en: 'Group Edit' },
   globalEditMode: { zh: '全局编辑', en: 'Global Edit' },
   done: { zh: '完成', en: 'Done' },
+  prevStep: { zh: '上一步', en: 'Back' },
+  nextStep: { zh: '下一步', en: 'Next' },
+  skip: { zh: '跳过', en: 'Skip' },
   hiddenBookmarks: { zh: '个隐藏书签', en: 'hidden bookmarks' },
   noMatchFound: { zh: '未找到匹配的书签', en: 'No matching bookmarks' },
   groupEditHint: { zh: '此模式下编辑仅影响当前分组', en: 'Edits only affect this group' },
@@ -100,8 +103,27 @@ const UI_TEXT = {
   // Secret Modal
   enterSecret: { zh: '输入暗号', en: 'Enter Secret Code' },
   secretHint: { zh: '请输入暗号进入全量模式', en: 'Enter secret code to enter all mode' },
+  secretHintFull: { zh: '输入暗号解锁全量模式', en: 'Enter code to unlock all mode' },
+  lockWarning: { zh: '还剩 {n} 次机会，失败将锁定1分钟', en: '{n} attempts left — locked for 1 min after failure' },
+  lockedPleaseRetry: { zh: '已锁定，请稍后再试', en: 'Locked — please try again later' },
+  confirmUnlock: { zh: '确认解锁', en: 'Confirm' },
+  wrongSecretAttempts: { zh: '暗号错误，还剩 {n} 次机会', en: 'Wrong code — {n} attempts left' },
   wrongSecret: { zh: '暗号错误', en: 'Wrong code' },
   tryAgain: { zh: '重试', en: 'Try Again' },
+
+  // Empty state / batch selection
+  selectedCount: { zh: '已选中', en: 'selected' },
+  quickRemove: { zh: '快速移除', en: 'Quick Remove' },
+  hideAll: { zh: '全部隐藏', en: 'Hide All' },
+  moveToAll: { zh: '移动到全部', en: 'Move to All' },
+  permanentlyDelete: { zh: '彻底删除', en: 'Delete' },
+
+  // Error boundary
+  errorBoundaryTitle: { zh: '组件加载失败', en: 'Failed to load component' },
+  errorBoundaryRetry: { zh: '重试', en: 'Retry' },
+
+  // Storage
+  storageFullWarning: { zh: '存储空间不足，请清理部分书签', en: 'Storage full — please remove some bookmarks' },
 
   // Region labels
   regionAuto: { zh: '自动（不区分语言）', en: 'Auto (language neutral)' },

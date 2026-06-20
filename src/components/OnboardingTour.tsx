@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppStore, subscribeHydration } from '@/stores/appStore';
-import { useCurrentLang } from '@/utils/i18n';
+import { useCurrentLang, getText } from '@/utils/i18n';
 
 interface TourStep {
   key: string;
@@ -146,16 +146,14 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
               onClick={(e) => { e.stopPropagation(); onPrev(); }}
               className="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800"
             >
-              {lang === 'zh' ? '上一步' : 'Back'}
+              {getText('prevStep', lang)}
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); onNext(); }}
             className="px-3 py-1 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700"
           >
-            {current === total - 1
-              ? lang === 'zh' ? '完成' : 'Done'
-              : lang === 'zh' ? '下一步' : 'Next'}
+            {current === total - 1 ? getText('done', lang) : getText('nextStep', lang)}
           </button>
         </div>
       </div>
@@ -199,6 +197,33 @@ export default function OnboardingTour() {
       clearTimeout(timer);
       unsubscribe();
     };
+  }, []);
+
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const prevActiveRef = useRef<Element | null>(null);
+
+  // Focus trap: save focus, focus first element, restore on close
+  useEffect(() => {
+    prevActiveRef.current = document.activeElement;
+    const firstFocusable = tooltipRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
+
+    return () => {
+      if (prevActiveRef.current instanceof HTMLElement) {
+        prevActiveRef.current.focus();
+      }
+    };
+  }, []);
+
+  // Escape key closes the tour
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleSkip();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   // Don't render anything until hydration is complete
@@ -272,16 +297,18 @@ export default function OnboardingTour() {
       )}
 
       {/* Tooltip */}
-      <TourTooltip
-        step={currentStep}
-        lang={lang}
-        total={TOUR_STEPS.length}
-        current={step}
-        onNext={handleNext}
-        onPrev={handlePrev}
-        onSkip={handleSkip}
-        targetRect={targetRect}
-      />
+      <div ref={tooltipRef}>
+        <TourTooltip
+          step={currentStep}
+          lang={lang}
+          total={TOUR_STEPS.length}
+          current={step}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSkip={handleSkip}
+          targetRect={targetRect}
+        />
+      </div>
     </>
   );
 }

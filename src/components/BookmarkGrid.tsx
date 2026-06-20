@@ -80,6 +80,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [showBatchBar, setShowBatchBar] = useState(false);
   const [batchActionMenu, setBatchActionMenu] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_focusedContextIdx, setFocusedContextIdx] = useState(-1);
 
   const openBookmark = useAppStore((s) => s.openBookmark);
   const moveBookmark = useAppStore((s) => s.moveBookmark);
@@ -253,6 +255,43 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     setContextMenu(null);
   };
 
+  // Count all menu items (copy, open, move-to groups, hide, delete)
+  const visibleGroups = groups.filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu?.bookmarkId)?.groupId));
+  const menuItemCount = 2 + visibleGroups.length + 2; // copy + open + groups + hide + delete
+
+  // Context menu keyboard navigation
+  const handleContextKeyDown = (e: React.KeyboardEvent) => {
+    if (!contextMenu) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedContextIdx((i) => Math.min(i + 1, menuItemCount - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedContextIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Escape') {
+      setContextMenu(null);
+      setFocusedContextIdx(-1);
+    }
+  };
+
+  // Context menu keyboard listener
+  useEffect(() => {
+    const el = contextMenuRef.current;
+    if (!el) return;
+    const handler = (e: Event) => handleContextKeyDown(e as unknown as React.KeyboardEvent);
+    el.addEventListener('keydown', handler);
+    return () => el.removeEventListener('keydown', handler);
+  }, [contextMenu, handleContextKeyDown]);
+
+  // Focus first menu item when context menu opens
+  useEffect(() => {
+    if (!contextMenu) return;
+    const el = contextMenuRef.current;
+    if (!el) return;
+    const buttons = el.querySelectorAll<HTMLElement>('button');
+    if (buttons[0]) buttons[0].focus();
+  }, [contextMenu]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -292,30 +331,31 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {showBatchBar && (
         <div className="batch-bar">
           <span className="batch-count">
-            {selectedIds.size} {lang === 'zh' ? '已选中' : 'selected'}
+            {selectedIds.size} {getText('selectedCount', lang)}
           </span>
           <div className="batch-actions">
             <button
               onClick={() => setBatchActionMenu(batchActionMenu ? null : 'move')}
               className="batch-btn"
             >
-              {lang === 'zh' ? '移动到' : 'Move to'}
+              {getText('moveTo', lang)}
             </button>
             <button
               onClick={handleBatchHide}
               className="batch-btn"
             >
-              {lang === 'zh' ? '隐藏' : 'Hide'}
+              {getText('hide', lang)}
             </button>
             <button
               onClick={handleBatchDelete}
               className="batch-btn danger"
             >
-              {lang === 'zh' ? '删除' : 'Delete'}
+              {getText('deleteAction', lang)}
             </button>
             <button
               onClick={handleClearSelection}
               className="batch-btn"
+              aria-label="Clear selection"
             >
               ✕
             </button>
@@ -344,7 +384,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {editMode === 'none' && !searchQuery && selectedIds.size > 0 && (
         <div className="batch-bar">
           <span className="text-xs text-gray-500 font-medium">
-            {lang === 'zh' ? '快速移除' : 'Quick Remove'}
+            {getText('quickRemove', lang)}
           </span>
           <div className="batch-actions">
             <button
@@ -361,7 +401,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               disabled={!activeGroupId}
             >
               <ArrowLeft size={12} className="inline mr-1" />
-              {lang === 'zh' ? '移出分组' : 'From Group'}
+              {getText('removeFromGroup', lang)}
             </button>
             <button
               onClick={() => {
@@ -371,7 +411,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               className="batch-btn"
             >
               <EyeOff size={12} className="inline mr-1" />
-              {lang === 'zh' ? '全部隐藏' : 'Hide All'}
+              {getText('hideAll', lang)}
             </button>
             <button
               onClick={() => {
@@ -381,7 +421,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               className="batch-btn danger"
             >
               <Trash2 size={12} className="inline mr-1" />
-              {lang === 'zh' ? '彻底删除' : 'Delete'}
+              {getText('permanentlyDelete', lang)}
             </button>
           </div>
         </div>
@@ -478,6 +518,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         <div
           ref={contextMenuRef}
           className="context-menu"
+          role="menu"
+          aria-label="Bookmark actions"
           style={{
             left: contextMenu.x,
             top: contextMenu.flipped ? undefined : contextMenu.y,
@@ -485,10 +527,12 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
             maxHeight: contextMenu.maxHeight,
           }}
           onMouseDown={(e) => e.stopPropagation()}
+          onMouseLeave={() => setFocusedContextIdx(-1)}
         >
           {/* Top actions */}
-          <div>
+          <div role="none">
             <button
+              role="menuitem"
               onClick={handleContextCopyUrl}
               className="context-menu-item"
             >
@@ -496,6 +540,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               {getText('copyUrl', lang)}
             </button>
             <button
+              role="menuitem"
               onClick={handleContextOpenNewTab}
               className="context-menu-item"
             >
@@ -507,15 +552,16 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-menu-divider" />
 
           {/* Groups */}
-          <div className="context-submenu-header">
+          <div className="context-submenu-header" role="menuitem" aria-hidden="true">
             {getText('moveTo', lang)}
           </div>
-          <div className="context-group-list">
+          <div className="context-group-list" role="none">
             {groups
               .filter((g) => g.id !== (activeGroupId || bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId))
               .map((g) => (
                 <button
                   key={g.id}
+                  role="menuitem"
                   onClick={() => handleContextMoveTo(g.id)}
                   className="context-menu-item"
                 >
@@ -528,8 +574,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-menu-divider" />
 
           {/* Bottom actions */}
-          <div>
+          <div role="none">
             <button
+              role="menuitem"
               onClick={handleContextHide}
               className="context-menu-item"
             >
@@ -537,6 +584,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
               {getText('hideBookmark', lang)}
             </button>
             <button
+              role="menuitem"
               onClick={handleContextDelete}
               className="context-menu-item danger"
             >

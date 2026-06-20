@@ -60,6 +60,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
   const updateGroup = useAppStore((s) => s.updateGroup);
   const deleteGroup = useAppStore((s) => s.deleteGroup);
   const updateSettings = useAppStore((s) => s.updateSettings);
+  const replaceAllBookmarks = useAppStore((s) => s.replaceAllBookmarks);
 
   const [groupEdit, setGroupEdit] = useState<GroupEditState | null>(null);
   const [importMsg, setImportMsg] = useState('');
@@ -135,20 +136,30 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
         return;
       }
       updateSettings({ ...data!.settings });
-      const existingIds = new Set(groups.map((g) => g.id));
+      const existingGroupIds = new Set(groups.map((g) => g.id));
       data!.groups.forEach((g) => {
-        if (!existingIds.has(g.id)) addGroup(g.name, g.icon, g.nameI18n);
+        if (!existingGroupIds.has(g.id)) addGroup(g.name, g.icon, g.nameI18n);
       });
-      setImportMsg(getText('importSuccess', lang) as string);
+      const existingBookmarkIds = new Set(bookmarks.map((b) => b.id));
+      const importedBookmarks = data!.bookmarks.filter((b) => !existingBookmarkIds.has(b.id));
+      if (importedBookmarks.length > 0) {
+        replaceAllBookmarks([...bookmarks, ...importedBookmarks]);
+      }
+      const count = data!.bookmarks.length;
+      setImportMsg(
+        lang === 'zh'
+          ? `导入成功！${count} 个书签已恢复`
+          : `Import successful! ${count} bookmark(s) restored`
+      );
       setImportMsgType('success');
       setTimeout(() => { setImportMsg(''); setImportMsgType(null); }, 3000);
     } catch {
-      const msg = lang === 'zh' ? '导入失败，请检查文件格式' : 'Import failed, please check file format';
+      const msg = `${getText('importFailed', lang)}, please check file format`;
       setImportMsg(msg);
       setImportMsgType('error');
       setTimeout(() => { setImportMsg(''); setImportMsgType(null); }, 3000);
     }
-  }, [groups, addGroup, updateSettings, lang]);
+  }, [groups, bookmarks, addGroup, updateSettings, replaceAllBookmarks, lang]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

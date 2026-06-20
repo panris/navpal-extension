@@ -109,6 +109,7 @@ export interface AppState {
   deleteBookmarkFromGroup: (id: string, groupId: string) => void;  // 从分组删除（仅在分组编辑时）
   reorderBookmarks: (groupId: string, bookmarkIds: string[]) => void;
   moveBookmark: (bookmarkId: string, targetGroupId: string) => void;
+  replaceAllBookmarks: (bookmarks: Bookmark[]) => void;
 
   // 全局书签操作（全局编辑模式）
   hideBookmarkGlobally: (id: string) => void;

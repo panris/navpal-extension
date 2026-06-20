@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { MAX_PIN_ATTEMPTS } from '@/constants';
+import { MAX_PIN_ATTEMPTS, decodeSecret, encodeSecret, isSecretEncoded } from '@/constants';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
 const STORAGE_KEY = 'navpal-reveal-fails';
@@ -41,6 +41,7 @@ export default function SecretModal() {
 
   const settings = useAppStore((s) => s.settings);
   const revealMode = useAppStore((s) => s.revealMode);
+  const updateSettings = useAppStore((s) => s.updateSettings);
 
   // Listen for reveal request
   useEffect(() => {
@@ -57,8 +58,13 @@ export default function SecretModal() {
   const remaining = MAX_PIN_ATTEMPTS - attempts;
 
   const handleSubmit = () => {
-    if (pin === settings.secretCode) {
+    const storedPlain = decodeSecret(settings.secretCode);
+    if (pin === storedPlain) {
       clearFailures();
+      // Upgrade legacy plain-text secret to encoded on first successful verification
+      if (!isSecretEncoded(settings.secretCode)) {
+        updateSettings({ secretCode: encodeSecret(pin) });
+      }
       revealMode();
       setIsOpen(false);
       setPin('');
@@ -85,17 +91,16 @@ export default function SecretModal() {
   if (!isOpen) return null;
 
   // I18n text
-  const isZh = lang === 'zh';
   const titleText = getText('enterSecret', lang);
-  const hintText = isZh ? '输入暗号解锁全量模式' : 'Enter code to unlock all mode';
-  const lockWarningText = isZh
+  const hintText = getText('secretHintFull', lang);
+  const lockWarningText = lang === 'zh'
     ? `还剩 ${remaining} 次机会，失败将锁定1分钟`
     : `${remaining} attempts left, locked for 1 min after failure`;
-  const lockedText = isZh ? '已锁定，请稍后再试' : 'Locked, please try again later';
-  const submitText = isZh ? '确认解锁' : 'Confirm';
+  const lockedText = getText('lockedPleaseRetry', lang);
+  const submitText = getText('confirmUnlock', lang);
   const errorText = remaining <= 0
     ? lockedText
-    : (isZh ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`);
+    : (lang === 'zh' ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`);
 
   return (
     <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>

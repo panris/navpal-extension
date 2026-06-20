@@ -143,7 +143,7 @@ export default function App() {
           style={{ background: 'var(--warning-color)', color: 'white' }}
           onClick={() => setStorageFull(false)}
         >
-          {lang === 'zh' ? '存储空间不足，请清理部分书签' : 'Storage full — please remove some bookmarks'}
+          {getText('storageFullWarning', lang)}
         </div>
       )}
 

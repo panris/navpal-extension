@@ -2,7 +2,7 @@
 
 import { Group, Bookmark } from '@/types';
 import { generateId } from '@/utils';
-import { CURRENT_SCHEMA_VERSION } from '@/constants';
+import { CURRENT_SCHEMA_VERSION, generateDefaultSecretCode, encodeSecret } from '@/constants';
 
 // 辅助函数：为书签添加描述
 function withDescription(bookmark: Omit<Bookmark, 'id' | 'createdAt' | 'updatedAt'>, desc: { en: string; zh: string }): Bookmark {
@@ -358,7 +358,7 @@ export const DEFAULT_BOOKMARKS: Bookmark[] = [
 ];
 
 export const DEFAULT_SETTINGS = {
-  secretCode: '000',
+  secretCode: encodeSecret(generateDefaultSecretCode()),
   triggerZone: 'bottom-left' as const,
   lockDuration: 60000,
   showRegionLabels: true,
