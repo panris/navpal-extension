@@ -72,6 +72,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{
     bookmarkId: string;
+    bookmarkGroupId: string | null; // snapshot — avoids recomputing visibleGroups on every bookmark mutation
     activeGroupId: string | null; // snapshot at time of open — prevents race on tab switch
     x: number;
     y: number;
@@ -219,7 +220,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     const flipped = e.clientY + menuHeight > window.innerHeight - 8;
     const availableBelow = flipped ? e.clientY : window.innerHeight - e.clientY;
     const maxHeight = Math.min(menuHeight, availableBelow - 8);
-    setContextMenu({ bookmarkId, activeGroupId, x, y: e.clientY, flipped, maxHeight: Math.max(120, maxHeight) });
+    const bookmarkGroupId = bookmarksState.find((b) => b.id === bookmarkId)?.groupId ?? null;
+    setContextMenu({ bookmarkId, bookmarkGroupId, activeGroupId, x, y: e.clientY, flipped, maxHeight: Math.max(120, maxHeight) });
   };
 
   // Context menu actions
@@ -258,10 +260,10 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   // Count all menu items (copy, open, move-to groups, hide, delete)
   const visibleGroups = useMemo(() =>
     groups.filter((g) => {
-      const excludeId = contextMenu?.activeGroupId ?? bookmarksState.find((b) => b.id === contextMenu?.bookmarkId)?.groupId ?? null;
+      const excludeId = contextMenu?.activeGroupId ?? contextMenu?.bookmarkGroupId ?? null;
       return g.id !== excludeId;
-    }), [groups, contextMenu?.activeGroupId, contextMenu?.bookmarkId, bookmarksState]);
-  const menuItemCount = 2 + visibleGroups.length + 2; // copy + open + groups + hide + delete
+    }), [groups, contextMenu?.activeGroupId, contextMenu?.bookmarkGroupId]);
+  const menuItemCount = useMemo(() => 2 + visibleGroups.length + 2, [visibleGroups.length]); // copy + open + groups + hide + delete
 
   // Context menu keyboard navigation — useCallback to keep identity stable for useEffect dep
   const handleContextKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -319,7 +321,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const targetGroupId = editMode === 'group' && activeGroupId ? activeGroupId : activeGroupId;
+    const targetGroupId = activeGroupId;
 
     const oldIndex = bookmarkIds.indexOf(String(active.id));
     const newIndex = bookmarkIds.indexOf(String(over.id));
@@ -562,7 +564,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-group-list" role="none">
             {groups
               .filter((g) => {
-                const excludeId = contextMenu.activeGroupId ?? bookmarksState.find((b) => b.id === contextMenu.bookmarkId)?.groupId ?? null;
+                const excludeId = contextMenu.activeGroupId ?? contextMenu.bookmarkGroupId ?? null;
                 return g.id !== excludeId;
               })
               .map((g) => (

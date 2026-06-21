@@ -410,13 +410,9 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   );
 }
 
-// Stable reference via memo
-// Note: We compare bookmark identity, selection state, AND editMode.
-// editMode is passed as prop to ensure memo re-evaluates when edit mode changes.
+// Stable reference via memo — id is the single source of truth for bookmark identity
 const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
-    prev.bookmark.title === next.bookmark.title &&
-    prev.bookmark.url === next.bookmark.url &&
     prev.groupId === next.groupId &&
     prev.isSelected === next.isSelected &&
     prev.editMode === next.editMode;

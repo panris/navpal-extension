@@ -103,8 +103,9 @@ export default function AppFull() {
     });
   }, []);
 
-  // Default active group
+  // Default active group — only auto-select when current activeGroupId points to a deleted/missing group
   useEffect(() => {
+    if (activeGroupId && groups.some((g) => g.id === activeGroupId)) return; // already valid
     if (!activeGroupId && groups.length > 0) {
       setActiveGroup(groups[0].id);
     }
@@ -123,7 +124,7 @@ export default function AppFull() {
     switch (e.key) {
       case '/':
       case 'k':
-        if (e.ctrlKey || e.key === '/') {
+        if (e.ctrlKey || e.key === '/' || e.key === 'k') {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent('navpal:focus', { detail: { focus: 'search' } }));
         }

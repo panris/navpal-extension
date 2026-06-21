@@ -234,23 +234,19 @@ export default function OnboardingTour() {
 
   const currentStep = TOUR_STEPS[step];
 
-  // Find target element and get its rect
-  useEffect(() => {
-    const updateRect = () => {
-      const el = document.querySelector(currentStep.target);
-      if (el) {
-        setTargetRect(el.getBoundingClientRect());
-      } else {
-        setTargetRect(null);
-      }
-    };
+  // Stable updateRect ref — avoids remove/re-add listener thrash on every step change
+  const updateRectRef = useRef<() => void>(() => {});
+  updateRectRef.current = () => {
+    const el = document.querySelector(currentStep.target);
+    setTargetRect(el ? el.getBoundingClientRect() : null);
+  };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(updateRect, 50);
-    window.addEventListener('resize', updateRect);
+  useEffect(() => {
+    const timer = setTimeout(updateRectRef.current, 50);
+    window.addEventListener('resize', updateRectRef.current);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('resize', updateRectRef.current);
     };
   }, [step, currentStep.target]);
 
