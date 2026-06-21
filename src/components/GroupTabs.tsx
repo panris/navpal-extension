@@ -3,11 +3,7 @@ import { Sparkles, Code, Palette, Briefcase, Wrench, Music, Gamepad2 } from 'luc
 import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { useCurrentLang, getText } from '@/utils/i18n';
-
-function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
-  if (region === 'CN' && lang === 'en') return false;
-  return true;
-}
+import { isBookmarkVisible } from '@/utils/bookmarkVisibility';
 
 function getGroupIcon(icon: string | undefined): React.ReactNode {
   switch (icon) {

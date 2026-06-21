@@ -17,16 +17,11 @@ import {
 import { Bookmark } from '@/types';
 import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
 import { CONTEXT_MENU_HEIGHT } from '@/constants';
+import { isBookmarkVisible } from '@/utils/bookmarkVisibility';
 import SortableBookmarkCard from './SortableBookmarkCard';
 import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft, Plus } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
-
-// Check if bookmark should be visible based on language
-function isBookmarkVisible(region: 'CN' | 'Global' | null, lang: 'zh' | 'en'): boolean {
-  if (region === 'CN' && lang === 'en') return false;
-  return true;
-}
 
 // Empty state with illustration
 function EmptyState({ lang, onAdd, mode }: { lang: 'zh' | 'en'; onAdd: () => void; mode: 'none' | 'group' | 'global' }) {
@@ -83,8 +78,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [showBatchBar, setShowBatchBar] = useState(false);
   const [batchActionMenu, setBatchActionMenu] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_focusedContextIdx, setFocusedContextIdx] = useState(-1);
+  const [focusedContextIdx, setFocusedContextIdx] = useState(-1);
 
   const openBookmark = useAppStore((s) => s.openBookmark);
   const moveBookmark = useAppStore((s) => s.moveBookmark);
@@ -527,6 +521,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           className="context-menu"
           role="menu"
           aria-label="Bookmark actions"
+          aria-activedescendant={focusedContextIdx >= 0 ? `ctx-item-${focusedContextIdx}` : undefined}
+          tabIndex={-1}
           style={{
             left: contextMenu.x,
             top: contextMenu.flipped ? undefined : contextMenu.y,
@@ -536,25 +532,15 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           onMouseDown={(e) => e.stopPropagation()}
           onMouseLeave={() => setFocusedContextIdx(-1)}
         >
-          {/* Top actions */}
-          <div role="none">
-            <button
-              role="menuitem"
-              onClick={handleContextCopyUrl}
-              className="context-menu-item"
-            >
-              <Copy size={14} className="text-indigo-500" />
-              {getText('copyUrl', lang)}
+          {[
+            // Top actions
+            { id: 'ctx-item-0', onClick: handleContextCopyUrl, icon: <Copy size={14} className="text-indigo-500" />, label: getText('copyUrl', lang) },
+            { id: 'ctx-item-1', onClick: handleContextOpenNewTab, icon: <ExternalLink size={14} className="text-blue-500" />, label: getText('openInNewTab', lang) },
+          ].map((item) => (
+            <button key={item.id} id={item.id} role="menuitem" onClick={item.onClick} className="context-menu-item">
+              {item.icon}{item.label}
             </button>
-            <button
-              role="menuitem"
-              onClick={handleContextOpenNewTab}
-              className="context-menu-item"
-            >
-              <ExternalLink size={14} className="text-blue-500" />
-              {getText('openInNewTab', lang)}
-            </button>
-          </div>
+          ))}
 
           <div className="context-menu-divider" />
 
@@ -564,9 +550,10 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           </div>
           <div className="context-group-list" role="none">
             {visibleGroups
-              .map((g) => (
+              .map((g, gIdx) => (
                 <button
                   key={g.id}
+                  id={`ctx-item-${gIdx + 2}`}
                   role="menuitem"
                   onClick={() => handleContextMoveTo(g.id)}
                   className="context-menu-item"
@@ -580,24 +567,14 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
           <div className="context-menu-divider" />
 
           {/* Bottom actions */}
-          <div role="none">
-            <button
-              role="menuitem"
-              onClick={handleContextHide}
-              className="context-menu-item"
-            >
-              <EyeOff size={14} />
-              {getText('hideBookmark', lang)}
+          {[
+            { id: `ctx-item-${visibleGroups.length + 2}`, onClick: handleContextHide, icon: <EyeOff size={14} />, label: getText('hideBookmark', lang) },
+            { id: `ctx-item-${visibleGroups.length + 3}`, onClick: handleContextDelete, icon: <Trash2 size={14} />, label: getText('deleteAction', lang), danger: true },
+          ].map((item) => (
+            <button key={item.id} id={item.id} role="menuitem" onClick={item.onClick} className={`context-menu-item${item.danger ? ' danger' : ''}`}>
+              {item.icon}{item.label}
             </button>
-            <button
-              role="menuitem"
-              onClick={handleContextDelete}
-              className="context-menu-item danger"
-            >
-              <Trash2 size={14} />
-              {getText('deleteAction', lang)}
-            </button>
-          </div>
+          ))}
         </div>
       )}
     </div>

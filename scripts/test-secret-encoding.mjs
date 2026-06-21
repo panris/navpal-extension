@@ -6,7 +6,7 @@
 const SECRET_SALT = 'navpal-v1:';
 
 function generateDefaultSecretCode() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return String(Math.floor(1000 + Math.random() * (9999 - 1000 + 1)));
 }
 
 function encodeSecret(plainCode) {
@@ -75,15 +75,21 @@ assert(decodeSecret(knownEncoded) === '1234', `known PIN '1234' roundtrips corre
 assert(isSecretEncoded(knownEncoded), 'known PIN is detected as encoded');
 assert(knownEncoded.startsWith(btoa(SECRET_SALT).slice(0, 3)), 'encoded starts with salt prefix (base64)');
 
-// T8: 随机 PIN 都编码后不可读
-const codes = new Set();
+// T8: 随机 PIN 编码后都能正确解码
+const roundtripPass = { pass: 0, fail: 0 };
 for (let i = 0; i < 20; i++) {
   const c = generateDefaultSecretCode();
-  codes.add(encodeSecret(c));
+  const e = encodeSecret(c);
+  const d = decodeSecret(e);
+  if (d === c) roundtripPass.pass++; else roundtripPass.fail++;
 }
-const decodedSet = new Set([...codes].map(decodeSecret));
-assert(decodedSet.size === 20, `all 20 random codes decode back: ${decodedSet.size}`);
-assert(!decodedSet.has(SECRET_SALT), 'salt never leaks into decoded values');
+assert(roundtripPass.fail === 0, `all 20 random codes roundtrip: ${roundtripPass.pass}/20`);
+// Verify salt doesn't leak into any decoded value
+const allDecoded = Array.from({ length: 20 }, () => {
+  const c = generateDefaultSecretCode();
+  return decodeSecret(encodeSecret(c));
+});
+assert(!allDecoded.some(v => v.includes(SECRET_SALT)), 'salt never leaks into decoded values');
 
 console.log(`\n  Passed: ${pass} / ${pass + fail}`);
 if (fail === 0) {

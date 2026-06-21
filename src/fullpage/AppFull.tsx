@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useAppStore, useVisibleGroups, useVisibleBookmarks, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
@@ -146,9 +146,12 @@ export default function AppFull() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  const filteredBookmarks = activeGroupId
-    ? bookmarks.filter((b) => b.groupId === activeGroupId)
-    : bookmarks;
+  const filteredBookmarks = useMemo(() =>
+    activeGroupId
+      ? bookmarks.filter((b) => b.groupId === activeGroupId)
+      : bookmarks,
+    [activeGroupId, bookmarks]
+  );
 
   return (
     <div className="flex flex-col bg-gray-50 relative overflow-hidden" style={{ minHeight: '100vh' }}>
@@ -173,7 +176,9 @@ export default function AppFull() {
       </div>
 
       {/* Header — no window controls in full-page mode */}
-      <Header />
+      <ErrorBoundary>
+        <Header />
+      </ErrorBoundary>
 
       {/* Group Tabs */}
       <ErrorBoundary>
@@ -188,7 +193,9 @@ export default function AppFull() {
       </main>
 
       {/* Footer */}
-      <Footer />
+      <ErrorBoundary>
+        <Footer />
+      </ErrorBoundary>
 
       {/* Modals */}
       <ErrorBoundary><EditModal /></ErrorBoundary>

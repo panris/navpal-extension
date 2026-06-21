@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useAppStore, useVisibleGroups, useVisibleBookmarks, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
 import GroupTabs from '@/components/GroupTabs';
@@ -73,9 +73,12 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handler);
   }, [isRevealMode, exitRevealMode]);
 
-  const filteredBookmarks = activeGroupId
-    ? bookmarks.filter((b) => b.groupId === activeGroupId)
-    : bookmarks;
+  const filteredBookmarks = useMemo(() =>
+    activeGroupId
+      ? bookmarks.filter((b) => b.groupId === activeGroupId)
+      : bookmarks,
+    [activeGroupId, bookmarks]
+  );
   // ── Window controls ──────────────────────────────────────────
   /** 最小化：折叠内容区域，只显示状态栏+展开按钮 */
   const handleMinimize = () => setViewMode('minimized');
@@ -166,12 +169,14 @@ export default function App() {
       ) : (
         <>
           {/* Header */}
-          <Header
-            onMinimize={handleMinimize}
-            onMaximize={handleMaximize}
-            onRestore={handleRestore}
-            isMinimized={false}
-          />
+          <ErrorBoundary>
+            <Header
+              onMinimize={handleMinimize}
+              onMaximize={handleMaximize}
+              onRestore={handleRestore}
+              isMinimized={false}
+            />
+          </ErrorBoundary>
 
           {/* Group Tabs */}
           <ErrorBoundary>
@@ -186,7 +191,9 @@ export default function App() {
           </main>
 
           {/* Footer */}
-          <Footer />
+          <ErrorBoundary>
+            <Footer />
+          </ErrorBoundary>
         </>
       )}
 
@@ -195,14 +202,18 @@ export default function App() {
       <ErrorBoundary><SecretModal /></ErrorBoundary>
 
       {/* Onboarding Tour */}
-      <OnboardingTour />
+      <ErrorBoundary>
+        <OnboardingTour />
+      </ErrorBoundary>
 
       {/* Home Indicator */}
       {viewMode !== 'minimized' && <div className="home-indicator" />}
 
       {/* Resize Handle */}
       {viewMode !== 'minimized' && (
-        <ResizeHandle onMouseDown={handleMouseDown} />
+        <ErrorBoundary>
+          <ResizeHandle onMouseDown={handleMouseDown} />
+        </ErrorBoundary>
       )}
 
       {/* Resizing overlay */}

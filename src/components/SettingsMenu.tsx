@@ -47,6 +47,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
   const [tab, setTab] = useState<'main' | 'groups' | 'data'>('main');
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevFocusRef = useRef<Element | null>(null);
   const lang = useCurrentLang();
 
   const langPref = useAppStore((s) => s.langPref);
@@ -66,6 +67,21 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
   const [importMsg, setImportMsg] = useState('');
   const [importMsgType, setImportMsgType] = useState<'success' | 'error' | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; count: number } | null>(null);
+
+  // Focus trap: save focus on open, move to first menu item, restore on close
+  useEffect(() => {
+    if (isOpen) {
+      prevFocusRef.current = document.activeElement;
+      // Focus first focusable element in menu
+      const first = menuRef.current?.querySelector<HTMLButtonElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      first?.focus();
+    } else {
+      // Restore focus when menu closes
+      if (prevFocusRef.current instanceof HTMLElement) {
+        prevFocusRef.current.focus();
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -382,7 +398,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                   <span className="ml-auto text-xs" style={{ color: 'var(--text-muted)' }}>JSON</span>
                 </button>
                 {importMsg && (
-                  <p className="mt-2 text-xs font-medium" style={{ color: importMsgType === 'success' ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                  <p role="status" aria-live="polite" className="mt-2 text-xs font-medium" style={{ color: importMsgType === 'success' ? 'var(--success-color)' : 'var(--danger-color)' }}>
                     {importMsg}
                   </p>
                 )}
