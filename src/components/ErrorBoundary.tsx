@@ -10,6 +10,8 @@ interface Props {
 interface State {
   hasError: boolean;
   message?: string;
+  stack?: string;
+  componentStack?: string;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -19,11 +21,12 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, message: error.message };
+    return { hasError: true, message: error.message, stack: error.stack };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error('[NavPal ErrorBoundary]', error, info.componentStack);
+    this.setState({ componentStack: info.componentStack ?? undefined });
   }
 
   render() {
@@ -33,6 +36,9 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div className="text-4xl mb-3">⚠️</div>
           <p className="text-sm font-semibold text-gray-700 mb-1">{this.props.errorTitle ?? '组件加载失败'}</p>
           <p className="text-xs text-gray-400 mb-4">{this.state.message}</p>
+          {this.state.stack && (
+            <pre className="text-xs text-gray-300 mb-4 text-left whitespace-pre-wrap max-h-24 overflow-y-auto">{this.state.stack}</pre>
+          )}
           <button
             onClick={() => this.setState({ hasError: false })}
             className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl"

@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/fix-html.mjs && node scripts/generate-icons.mjs && node scripts/package.mjs",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

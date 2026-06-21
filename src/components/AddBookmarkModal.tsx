@@ -84,6 +84,10 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
       urlInputRef.current?.focus();
       return;
     }
+    // Guard: prevent adding bookmarks when no groups exist
+    if (!selectedGroup) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -216,7 +220,7 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!isValid || isSubmitting}
+            disabled={!isValid || isSubmitting || !selectedGroup}
             className="add-btn-confirm"
           >
             <Plus size={15} />

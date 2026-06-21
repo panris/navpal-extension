@@ -36,7 +36,13 @@ export default function SecretModal() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
-  const [attempts, setAttempts] = useState(getFailedAttempts());
+  const [attempts, setAttempts] = useState(() => {
+    try {
+      return getFailedAttempts();
+    } catch {
+      return 0;
+    }
+  });
   const lang = useCurrentLang();
 
   const settings = useAppStore((s) => s.settings);
@@ -103,7 +109,14 @@ export default function SecretModal() {
     : (lang === 'zh' ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`);
 
   return (
-    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50" onClick={() => setIsOpen(false)}>
+    <div
+      className="fixed inset-0 modal-overlay flex items-center justify-center z-50"
+      onClick={() => setIsOpen(false)}
+      onKeyDown={(e) => { if (e.key === 'Enter' && pin.length === 3 && remaining > 0) handleSubmit(); }}
+      tabIndex={-1}
+      role="dialog"
+      aria-label="Enter secret code"
+    >
       <div className="modal-content w-[300px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Gradient Header */}
         <div className="modal-header-gradient px-6 pt-6 pb-5 text-white text-center">

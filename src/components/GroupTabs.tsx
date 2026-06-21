@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Sparkles, Code, Palette, Briefcase, Wrench, Music, Gamepad2 } from 'lucide-react';
 import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
@@ -30,20 +31,24 @@ export default function GroupTabs() {
   const bookmarks = useAppStore((state) => state.bookmarks);
   const lang = useCurrentLang();
 
-  const getGroupCount = (groupId: string) => {
-    return bookmarks.filter((b) => {
-      if (b.groupId !== groupId) return false;
-      if (!isBookmarkVisibleInGroup(b, groupId, isRevealMode)) return false;
+  // Pre-compute group counts in a single pass (avoids O(N×G) filter operations)
+  const groupCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const b of bookmarks) {
+      if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) continue;
+      if (!isBookmarkVisible(b.region, lang)) continue;
+      counts.set(b.groupId, (counts.get(b.groupId) ?? 0) + 1);
+    }
+    return counts;
+  }, [bookmarks, isRevealMode, lang]);
+
+  const totalCount = useMemo(() =>
+    bookmarks.filter((b) => {
+      if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
       if (!isBookmarkVisible(b.region, lang)) return false;
       return true;
-    }).length;
-  };
-
-  const totalCount = bookmarks.filter((b) => {
-    if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
-    if (!isBookmarkVisible(b.region, lang)) return false;
-    return true;
-  }).length;
+    }).length,
+  [bookmarks, isRevealMode, lang]);
 
   const visibleGroups = groups.filter((g) => !g.hidden || isRevealMode);
 
@@ -70,7 +75,7 @@ export default function GroupTabs() {
             >
               <span>{getGroupIcon(group.icon)}</span>
               <span>{getGroupDisplayName(group, lang)}</span>
-              <span className="count-badge">{getGroupCount(group.id)}</span>
+              <span className="count-badge">{groupCounts.get(group.id) ?? 0}</span>
             </button>
           );
         })}

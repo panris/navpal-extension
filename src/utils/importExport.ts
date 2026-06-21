@@ -55,6 +55,15 @@ export function validateImportData(raw: unknown): { valid: boolean; data?: Expor
   if (!validGroup) return { valid: false, error: 'groups 格式错误' };
   if (!validBookmark) return { valid: false, error: 'bookmarks 格式错误' };
 
+  // Validate critical settings fields to prevent migration crashes
+  const settings = obj.settings as Record<string, unknown>;
+  if (typeof settings.schemaVersion !== 'number') {
+    return { valid: false, error: 'settings.schemaVersion 必须是数字' };
+  }
+  if (typeof settings.secretCode !== 'string') {
+    return { valid: false, error: 'settings.secretCode 必须是字符串' };
+  }
+
   return { valid: true, data: obj as unknown as ExportData };
 }
 

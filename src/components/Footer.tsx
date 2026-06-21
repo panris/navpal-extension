@@ -21,11 +21,8 @@ export default function Footer() {
   }).length;
 
   const hiddenCount = bookmarks.filter((b) => {
-    if (b.hidden && !b.deletedAt) return true;
     if (b.deletedAt) return false;
-    const groupHidden = Object.values(b.groupHidden || {}).some(v => v);
-    if (groupHidden && !b.hidden && !b.deletedAt) return true;
-    return false;
+    return b.hidden || Object.values(b.groupHidden || {}).some(v => v);
   }).length;
 
   return (

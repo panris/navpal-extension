@@ -52,7 +52,7 @@ function getIconLetter(url: string, title: string): string {
   } catch {
     // ignore
   }
-  return title.charAt(0).toUpperCase();
+  return title.trim().charAt(0).toUpperCase() || '?';
 }
 
 function getIconPattern(id: string): string {
