@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Settings, Plus, Trash2, Edit3, Download, Upload, Sparkles, Code, Palette, Briefcase, Wrench, Music, Gamepad2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAppStore, type ThemeName, getGroupDisplayName } from '@/stores/appStore';
@@ -167,10 +167,10 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
     e.target.value = '';
   };
 
-  const storageKB = (() => {
+  const storageKB = useMemo(() => {
     const data = { groups, bookmarks, settings };
     return (new Blob([JSON.stringify(data)]).size / 1024).toFixed(1);
-  })();
+  }, [groups, bookmarks, settings]);
 
   const tabLabels: Record<'main' | 'groups' | 'data', string> = {
     main: getText('appearance', lang),

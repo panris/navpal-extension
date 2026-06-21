@@ -3,6 +3,8 @@ import { Search } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import SettingsMenu from './SettingsMenu';
 import { useCurrentLang, getText } from '@/utils/i18n';
+import { SEARCH_DEBOUNCE_MS } from '@/constants';
+import { debounce } from '@/utils/index';
 
 interface HeaderProps {
   onMinimize?: () => void;
@@ -16,6 +18,11 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const lang = useCurrentLang();
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Debounced search to avoid filtering on every keystroke
+  const debouncedSetQuery = useRef(
+    debounce((q: string) => setSearchQuery(q), SEARCH_DEBOUNCE_MS)
+  ).current;
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -58,7 +65,7 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
           type="text"
           placeholder={getText('searchPlaceholder', lang)}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => debouncedSetQuery(e.target.value)}
           className="search-input"
         />
         {searchQuery && (

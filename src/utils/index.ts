@@ -143,7 +143,7 @@ export function getStorageSize(data: object): number {
 }
 
 // 防抖函数
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: never[]) => void>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {

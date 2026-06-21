@@ -103,10 +103,10 @@ export default function AppFull() {
     });
   }, []);
 
-  // Default active group — only auto-select when current activeGroupId points to a deleted/missing group
+  // Default active group — sync with popup logic: only auto-select when current activeGroupId points to a deleted/missing group
+  // Do NOT override when activeGroupId is null (user selected "All")
   useEffect(() => {
-    if (activeGroupId && groups.some((g) => g.id === activeGroupId)) return; // already valid
-    if (!activeGroupId && groups.length > 0) {
+    if (groups.length > 0 && activeGroupId && !groups.find((g) => g.id === activeGroupId)) {
       setActiveGroup(groups[0].id);
     }
   }, [activeGroupId, groups, setActiveGroup]);

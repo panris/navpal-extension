@@ -128,7 +128,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   }, [bookmarks, lang, editMode, activeGroupId, isRevealMode, searchQuery]);
 
   const sortedBookmarks = useMemo(() => [...filteredBookmarks].sort((a, b) => a.order - b.order), [filteredBookmarks]);
-  const bookmarkIds = sortedBookmarks.map((b) => b.id);
+  const bookmarkIds = useMemo(() => sortedBookmarks.map((b) => b.id), [sortedBookmarks]);
 
   // ── Keyboard navigation ─────────────────────────────────────────
   const COLUMNS = 3;
@@ -563,11 +563,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
             {getText('moveTo', lang)}
           </div>
           <div className="context-group-list" role="none">
-            {groups
-              .filter((g) => {
-                const excludeId = contextMenu.activeGroupId ?? contextMenu.bookmarkGroupId ?? null;
-                return g.id !== excludeId;
-              })
+            {visibleGroups
               .map((g) => (
                 <button
                   key={g.id}

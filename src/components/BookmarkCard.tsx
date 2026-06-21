@@ -415,6 +415,7 @@ const BookmarkCard = memo(BookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.groupId === next.groupId &&
     prev.isSelected === next.isSelected &&
+    prev.isKeyboardSelected === next.isKeyboardSelected &&
     prev.editMode === next.editMode;
 });
 

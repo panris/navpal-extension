@@ -422,10 +422,10 @@ export const useLangGroupBookmarks = (groupId: string | null) =>
       return true;
     });
 
-    // 按 order 排序
-    filteredBookmarks = filteredBookmarks.sort((a, b) => a.order - b.order);
+    // 按 order 排序 (spread to avoid mutating the original array)
+    const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
 
-    return { groups: visibleGroups, bookmarks: filteredBookmarks };
+    return { groups: visibleGroups, bookmarks: sortedBookmarks };
   });
 
 // ─── Group Name Helper ────────────────────────────────────────────

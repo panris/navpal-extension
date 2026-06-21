@@ -25,15 +25,13 @@ export function useKeyboardNavigation({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const clamp = (val: number, min: number, max: number) =>
-    Math.min(Math.max(val, min), max);
-
   const select = useCallback(
     (index: number) => {
       if (totalItems === 0) return;
-      setSelectedIndex(clamp(index, 0, totalItems - 1));
+      const clamped = Math.min(Math.max(index, 0), totalItems - 1);
+      setSelectedIndex(clamped);
     },
-    [totalItems, clamp]
+    [totalItems]
   );
 
   /**
@@ -65,23 +63,23 @@ export function useKeyboardNavigation({
 
   const moveRight = useCallback(() => {
     if (totalItems === 0) return;
-    setSelectedIndex((i) => clamp(i + 1, 0, totalItems - 1));
-  }, [totalItems, clamp]);
+    setSelectedIndex((i) => Math.min(Math.max(i + 1, 0), totalItems - 1));
+  }, [totalItems]);
 
   const moveLeft = useCallback(() => {
     if (totalItems === 0) return;
-    setSelectedIndex((i) => clamp(i - 1, 0, totalItems - 1));
-  }, [totalItems, clamp]);
+    setSelectedIndex((i) => Math.min(Math.max(i - 1, 0), totalItems - 1));
+  }, [totalItems]);
 
   const moveDown = useCallback(() => {
     if (totalItems === 0) return;
-    setSelectedIndex((i) => clamp(i + columns, 0, totalItems - 1));
-  }, [totalItems, columns, clamp]);
+    setSelectedIndex((i) => Math.min(Math.max(i + columns, 0), totalItems - 1));
+  }, [totalItems, columns]);
 
   const moveUp = useCallback(() => {
     if (totalItems === 0) return;
-    setSelectedIndex((i) => clamp(i - columns, 0, totalItems - 1));
-  }, [totalItems, columns, clamp]);
+    setSelectedIndex((i) => Math.min(Math.max(i - columns, 0), totalItems - 1));
+  }, [totalItems, columns]);
 
   // Select first item when items change and nothing selected
   useEffect(() => {

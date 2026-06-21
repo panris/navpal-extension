@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppStore, subscribeHydration } from '@/stores/appStore';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import { TOOLTIP_OFFSET, TOOLTIP_WIDTH, TOOLTIP_HEIGHT } from '@/constants';
@@ -173,31 +173,22 @@ export default function OnboardingTour() {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
+  // Skip / dismiss — stable reference (declared before useEffect deps)
+  const handleSkip = useCallback(() => {
+    setDismissed(true);
+    updateSettings({ hasSeenOnboarding: true });
+  }, [updateSettings]);
+
   // Wait for store hydration before checking hasSeenOnboarding
+  // Subscribe to hydration completion — handles both immediate and delayed hydration
   useEffect(() => {
-    // Subscribe to hydration completion
     const unsubscribe = subscribeHydration(() => {
       setIsHydrated(true);
-      // After hydration, check if onboarding was already completed
       if (useAppStore.getState().settings.hasSeenOnboarding) {
         setDismissed(true);
       }
     });
-    
-    // Also check immediately in case already hydrated (e.g., on subsequent renders)
-    // We use a small timeout to let the store initialize
-    const timer = setTimeout(() => {
-      const state = useAppStore.getState();
-      if (state.settings?.hasSeenOnboarding) {
-        setDismissed(true);
-        setIsHydrated(true);
-      }
-    }, 0);
-    
-    return () => {
-      clearTimeout(timer);
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -225,7 +216,7 @@ export default function OnboardingTour() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [handleSkip]);
 
   // Don't render anything until hydration is complete
   if (!isHydrated) return null;
@@ -263,11 +254,6 @@ export default function OnboardingTour() {
 
   const handlePrev = () => {
     if (step > 0) setStep(step - 1);
-  };
-
-  const handleSkip = () => {
-    setDismissed(true);
-    updateSettings({ hasSeenOnboarding: true });
   };
 
   return (
