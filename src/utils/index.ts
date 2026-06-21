@@ -100,8 +100,12 @@ export function autoDetectRegion(url: string): 'CN' | 'Global' {
   return 'Global';
 }
 
-// 生成唯一 ID
+// Generate unique ID using crypto UUID (falls back to timestamp+random for non-crypto contexts)
 export function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto (e.g., some test runners)
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 

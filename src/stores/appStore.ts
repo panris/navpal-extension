@@ -19,8 +19,10 @@ export function subscribeTheme(listener: ThemeListener): () => void {
 }
 
 export function notifyThemeChange(theme: ThemeName) {
-  // Apply theme to document
-  document.documentElement.setAttribute('data-theme', theme);
+  // Apply theme to document (guard for non-renderer contexts)
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
   themeListeners.forEach((l) => l(theme));
 }
 
@@ -313,8 +315,8 @@ export const useAppStore = create<
         const bookmark = get().bookmarks.find((b) => b.id === id);
         if (!bookmark) return;
         get().recordAccess(id);
-        window.open(bookmark.url, '_blank');
-        window.close();
+        const opened = window.open(bookmark.url, '_blank');
+        if (opened) window.close();
       },
 
       // 设置操作

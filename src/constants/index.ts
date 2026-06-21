@@ -5,11 +5,19 @@
 export const STORAGE_QUOTA_KB = 100;
 export const STORAGE_WARN_RATIO = 0.9;
 export const MAX_PIN_ATTEMPTS = 3;
+export const SECRET_PIN_MIN = 1000;
+export const SECRET_PIN_MAX = 9999;
 export const SEARCH_DEBOUNCE_MS = 200;
 export const CLOCK_TICK_MS = 30000;
+export const LOCK_DURATION_MS = 60_000; // 1 minute lockout after max PIN failures
+export const SHAKE_ANIM_MS = 400;       // PIN shake animation duration
+export const LOCK_DISMISS_MS = 1500;    // Locked modal auto-dismiss delay
 export const LANG_POLL_INTERVAL_MS = 500; // legacy, kept for reference
 export const TOOLTIP_OFFSET = 12;
+export const TOOLTIP_WIDTH = 260;
+export const TOOLTIP_HEIGHT = 140;
 export const MAX_BOOKMARKS_BEFORE_VIRTUALIZATION = 50;
+export const CONTEXT_MENU_HEIGHT = 420; // approximate height for flip detection
 export const MAX_TITLE_LEN = 60;
 export const MAX_URL_DISPLAY_LEN = 30;
 export const MAX_TITLE_DISPLAY_LEN = 20;
@@ -26,7 +34,7 @@ const SECRET_SALT = 'navpal-v1:';
 
 /** Generate a random 4-digit PIN for first-install reveal mode */
 export function generateDefaultSecretCode(): string {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return String(Math.floor(SECRET_PIN_MIN + Math.random() * (SECRET_PIN_MAX - SECRET_PIN_MIN + 1)));
 }
 
 /** Encode a plain PIN to an opaque string (base64 + salt) */

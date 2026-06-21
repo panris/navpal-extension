@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { MAX_PIN_ATTEMPTS, decodeSecret, encodeSecret, isSecretEncoded } from '@/constants';
+import { MAX_PIN_ATTEMPTS, LOCK_DURATION_MS, SHAKE_ANIM_MS, LOCK_DISMISS_MS, decodeSecret, encodeSecret, isSecretEncoded } from '@/constants';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
 const STORAGE_KEY = 'navpal-reveal-fails';
@@ -10,7 +10,9 @@ function getFailedAttempts(): number {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return 0;
-    const { count, resetAt } = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as { count?: unknown; resetAt?: unknown };
+    const count = typeof parsed.count === 'number' ? parsed.count : 0;
+    const resetAt = typeof parsed.resetAt === 'number' ? parsed.resetAt : 0;
     if (Date.now() > resetAt) {
       localStorage.removeItem(STORAGE_KEY);
       return 0;
@@ -23,7 +25,7 @@ function getFailedAttempts(): number {
 
 function recordFailure(): void {
   const count = getFailedAttempts() + 1;
-  const resetAt = Date.now() + 60_000; // lock for 1 min
+  const resetAt = Date.now() + LOCK_DURATION_MS;
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ count, resetAt }));
 }
 
@@ -83,13 +85,13 @@ export default function SecretModal() {
       setError(true);
       setPin('');
       setShake(true);
-      setTimeout(() => setShake(false), 400);
+      setTimeout(() => setShake(false), SHAKE_ANIM_MS);
       if (newAttempts >= MAX_PIN_ATTEMPTS) {
         setTimeout(() => {
           setIsOpen(false);
           setPin('');
           setError(false);
-        }, 1500);
+        }, LOCK_DISMISS_MS);
       }
     }
   };

@@ -361,7 +361,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${Math.min(parseFloat(storageKB) / 100 * 100, 100)}%`, background: 'var(--accent-color)' }}
+                    style={{ width: `${Math.min(parseFloat(storageKB), 100)}%`, background: 'var(--accent-color)' }}
                   />
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { Lock, EyeOff, Trash2, RotateCcw } from 'lucide-react';
-import { Bookmark } from '@/types';
+import { Bookmark, EditMode } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
@@ -76,7 +76,7 @@ function getDomain(url: string): string {
 interface BookmarkCardProps {
   bookmark: Bookmark;
   groupId: string;
-  editMode: string; // Passed from parent to ensure re-render on edit mode change
+  editMode: EditMode;
   isKeyboardSelected?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;

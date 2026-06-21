@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore, subscribeHydration } from '@/stores/appStore';
 import { useCurrentLang, getText } from '@/utils/i18n';
+import { TOOLTIP_OFFSET, TOOLTIP_WIDTH, TOOLTIP_HEIGHT } from '@/constants';
 
 interface TourStep {
   key: string;
@@ -65,9 +66,9 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
   useEffect(() => {
     if (!targetRect) return;
 
-    const gap = 12;
-    const tooltipW = 260;
-    const tooltipH = 140;
+    const gap = TOOLTIP_OFFSET;
+    const tooltipW = TOOLTIP_WIDTH;
+    const tooltipH = TOOLTIP_HEIGHT;
     let x = 0, y = 0;
 
     // Get viewport dimensions

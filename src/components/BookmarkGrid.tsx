@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Bookmark } from '@/types';
 import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
+import { CONTEXT_MENU_HEIGHT } from '@/constants';
 import SortableBookmarkCard from './SortableBookmarkCard';
 import { Copy, ExternalLink, Trash2, EyeOff, ArrowLeft, Plus } from 'lucide-react';
 import { useCurrentLang, getText } from '@/utils/i18n';
@@ -216,7 +217,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   const handleContextMenu = (e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
     const x = Math.min(e.clientX, window.innerWidth - 200);
-    const menuHeight = 420; // approximate total height of context menu items
+    const menuHeight = CONTEXT_MENU_HEIGHT; // approximate total height of context menu items
     const flipped = e.clientY + menuHeight > window.innerHeight - 8;
     const availableBelow = flipped ? e.clientY : window.innerHeight - e.clientY;
     const maxHeight = Math.min(menuHeight, availableBelow - 8);
