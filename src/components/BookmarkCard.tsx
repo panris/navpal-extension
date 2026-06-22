@@ -4,7 +4,7 @@ import { Bookmark, EditMode } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
-import { getIconStyle, getIconPattern, getDomain } from '@/utils/iconHash';
+import { getIconStyle, getIconPattern, getIconLetter, getDomain } from '@/utils/iconHash';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
 export { ICON_GRADIENTS } from '@/utils/iconHash';

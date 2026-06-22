@@ -39,6 +39,22 @@ export function getIconGradientClass(id: string): string {
   return `bg-gradient-to-br ${getIconStyle(id).bg}`;
 }
 
+export function getIconLetter(url: string, title: string): string {
+  try {
+    const hostname = new URL(url).hostname;
+    const parts = hostname.split('.');
+    if (parts.length >= 2) {
+      const secondLevel = parts[parts.length - 2];
+      if (secondLevel.length > 1) {
+        return secondLevel.charAt(0).toUpperCase();
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return title.trim().charAt(0).toUpperCase() || '?';
+}
+
 export function getDomain(url: string): string {
   try {
     return new URL(url).hostname.replace('www.', '');
