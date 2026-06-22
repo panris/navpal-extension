@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -24,7 +24,7 @@ import { useCurrentLang, getText } from '@/utils/i18n';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 
 // Empty state with illustration
-function EmptyState({ lang, onAdd, mode }: { lang: 'zh' | 'en'; onAdd: () => void; mode: 'none' | 'group' | 'global' }) {
+const EmptyState = memo(({ lang, onAdd, mode }: { lang: 'zh' | 'en'; onAdd: () => void; mode: 'none' | 'group' | 'global' }) => {
   const labels = {
     none: {
       zh: { title: '还没有书签', desc: '按 E 键添加书签', button: '添加第一个书签' },
@@ -55,7 +55,7 @@ function EmptyState({ lang, onAdd, mode }: { lang: 'zh' | 'en'; onAdd: () => voi
       </button>
     </div>
   );
-}
+});
 
 interface BookmarkGridProps {
   bookmarks: Bookmark[];
@@ -76,7 +76,6 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     maxHeight: number;
   } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const [showBatchBar, setShowBatchBar] = useState(false);
   const [batchActionMenu, setBatchActionMenu] = useState<string | null>(null);
   const [focusedContextIdx, setFocusedContextIdx] = useState(-1);
 
@@ -137,23 +136,19 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     },
   });
 
-  // Batch selection: Space key toggles the focused bookmark
-  const handleSpaceKey = useCallback(
-    (index: number) => {
-      const bookmark = sortedBookmarks[index];
-      if (!bookmark) return;
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(bookmark.id)) {
-          next.delete(bookmark.id);
-        } else {
-          next.add(bookmark.id);
-        }
-        return next;
-      });
-    },
-    [sortedBookmarks]
-  );
+  // Batch selection: Space key toggles the focused bookmark.
+  // Uses getState() so the callback never needs sortedBookmarks as a dependency.
+  const handleSpaceKey = useCallback((index: number) => {
+    const state = useAppStore.getState();
+    const bm = state.bookmarks[index];
+    if (!bm) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(bm.id)) next.delete(bm.id);
+      else next.add(bm.id);
+      return next;
+    });
+  }, []);
 
   // Sync Space handler into keyboard nav hook
   useEffect(() => {
@@ -169,11 +164,6 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [selectedIndex, handleSpaceKey, editMode, searchQuery]);
 
-  // Show/hide batch bar based on selection
-  useEffect(() => {
-    setShowBatchBar(selectedIds.size > 0);
-  }, [selectedIds]);
-
   // Close context menu on outside click
   useEffect(() => {
     const handler = () => setContextMenu(null);
@@ -182,75 +172,73 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   }, []);
 
   // Batch actions
-  const handleBatchDelete = () => {
+  const handleBatchDelete = useCallback(() => {
     const ids = Array.from(selectedIds);
     ids.forEach((id) => deleteBookmarkGlobally(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
-  };
+  }, [selectedIds, deleteBookmarkGlobally]);
 
-  const handleBatchHide = () => {
+  const handleBatchHide = useCallback(() => {
     const { hideBookmarkGlobally } = useAppStore.getState();
     const ids = Array.from(selectedIds);
     ids.forEach((id) => hideBookmarkGlobally(id));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
-  };
+  }, [selectedIds]);
 
-  const handleBatchMove = (targetGroupId: string) => {
+  const handleBatchMove = useCallback((targetGroupId: string) => {
     const ids = Array.from(selectedIds);
     ids.forEach((id) => moveBookmark(id, targetGroupId));
     setSelectedIds(new Set());
     setBatchActionMenu(null);
-  };
+  }, [selectedIds, moveBookmark]);
 
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
-  };
+  }, []);
 
-  const handleContextMenu = (e: React.MouseEvent, bookmarkId: string) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
     const x = Math.min(e.clientX, window.innerWidth - 200);
-    const menuHeight = CONTEXT_MENU_HEIGHT; // approximate total height of context menu items
+    const menuHeight = CONTEXT_MENU_HEIGHT;
     const flipped = e.clientY + menuHeight > window.innerHeight - 8;
     const availableBelow = flipped ? e.clientY : window.innerHeight - e.clientY;
     const maxHeight = Math.min(menuHeight, availableBelow - 8);
     const bookmarkGroupId = bookmarksState.find((b) => b.id === bookmarkId)?.groupId ?? null;
     setContextMenu({ bookmarkId, bookmarkGroupId, activeGroupId, x, y: e.clientY, flipped, maxHeight: Math.max(120, maxHeight) });
-  };
+  }, [bookmarksState, activeGroupId]);
 
-  // Context menu actions
-  const handleContextCopyUrl = () => {
-    if (!contextMenu) return;
-    const bookmark = bookmarksState.find((b) => b.id === contextMenu.bookmarkId);
+  // Context menu actions — use getState() to avoid unnecessary deps
+  const handleContextCopyUrl = useCallback(() => {
+    const bookmark = useAppStore.getState().bookmarks.find((b) => b.id === contextMenu?.bookmarkId);
     if (bookmark) navigator.clipboard.writeText(bookmark.url);
     setContextMenu(null);
-  };
+  }, [contextMenu?.bookmarkId]);
 
-  const handleContextOpenNewTab = () => {
-    if (!contextMenu) return;
-    const bookmark = bookmarksState.find((b) => b.id === contextMenu.bookmarkId);
+  const handleContextOpenNewTab = useCallback(() => {
+    const bookmark = useAppStore.getState().bookmarks.find((b) => b.id === contextMenu?.bookmarkId);
     if (bookmark) window.open(bookmark.url, '_blank');
     setContextMenu(null);
-  };
+  }, [contextMenu?.bookmarkId]);
 
-  const handleContextMoveTo = (targetGroupId: string) => {
+  const handleContextMoveTo = useCallback((targetGroupId: string) => {
     if (!contextMenu) return;
     moveBookmark(contextMenu.bookmarkId, targetGroupId);
     setContextMenu(null);
-  };
+  }, [contextMenu, moveBookmark]);
 
-  const handleContextDelete = () => {
+  const handleContextDelete = useCallback(() => {
     if (!contextMenu) return;
     deleteBookmarkGlobally(contextMenu.bookmarkId);
     setContextMenu(null);
-  };
+  }, [contextMenu, deleteBookmarkGlobally]);
 
-  const handleContextHide = () => {
+  const handleContextHide = useCallback(() => {
     if (!contextMenu) return;
     hideBookmarkGlobally(contextMenu.bookmarkId);
     setContextMenu(null);
-  };
+  }, [contextMenu, hideBookmarkGlobally]);
 
   // Count all menu items (copy, open, move-to groups, hide, delete)
   const visibleGroups = useMemo(() =>
@@ -299,16 +287,25 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   );
 
   // Get current group name
-  const currentGroupName = activeGroupId
-    ? groups.find((g) => g.id === activeGroupId)?.name || ''
-    : '';
+  const currentGroupName = useMemo(
+    () => activeGroupId
+      ? groups.find((g) => g.id === activeGroupId)?.name || ''
+      : '',
+    [activeGroupId, groups]
+  );
 
-  // Calculate hidden count - ONLY for "All" tab (activeGroupId === null)
-  const totalHidden = activeGroupId === null ? bookmarksState.filter((b) => {
-    if (b.hidden && !isRevealMode) return true;
-    if (b.region === 'CN' && lang === 'en' && !isRevealMode) return true;
-    return false;
-  }).length : 0;
+  // Calculate hidden count — ONLY for "All" tab (activeGroupId === null)
+  const totalHidden = useMemo(
+    () =>
+      activeGroupId === null
+        ? bookmarksState.filter((b) => {
+          if (b.hidden && !isRevealMode) return true;
+          if (b.region === 'CN' && lang === 'en' && !isRevealMode) return true;
+          return false;
+        }).length
+        : 0,
+    [activeGroupId, bookmarksState, isRevealMode, lang]
+  );
 
   const handleDragStart = () => setIsDragging(true);
   const handleDragEnd = (event: DragEndEvent) => {
@@ -329,7 +326,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   return (
     <div>
       {/* Batch Action Bar */}
-      {showBatchBar && (
+      {selectedIds.size > 0 && (
         <div className="batch-bar">
           <span className="batch-count">
             {selectedIds.size} {getText('selectedCount', lang)}
@@ -458,7 +455,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       {sortedBookmarks.length === 0 && !searchQuery ? (
         <EmptyState lang={lang} onAdd={() => setEditMode(activeGroupId ? 'group' : 'global')} mode={editMode} />
       ) : sortedBookmarks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+        <div role="status" aria-live="polite" className="flex flex-col items-center justify-center py-12 text-gray-400">
           <div className="text-4xl mb-2">🔍</div>
           <p className="text-sm">{getText('noMatchFound', lang)}</p>
         </div>
@@ -534,8 +531,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
         >
           {[
             // Top actions
-            { id: 'ctx-item-0', onClick: handleContextCopyUrl, icon: <Copy size={14} className="text-indigo-500" />, label: getText('copyUrl', lang) },
-            { id: 'ctx-item-1', onClick: handleContextOpenNewTab, icon: <ExternalLink size={14} className="text-blue-500" />, label: getText('openInNewTab', lang) },
+            { id: 'ctx-item-0', onClick: handleContextCopyUrl, icon: <Copy size={14} className="text-indigo-500" aria-hidden="true" />, label: getText('copyUrl', lang) },
+            { id: 'ctx-item-1', onClick: handleContextOpenNewTab, icon: <ExternalLink size={14} className="text-blue-500" aria-hidden="true" />, label: getText('openInNewTab', lang) },
           ].map((item) => (
             <button key={item.id} id={item.id} role="menuitem" onClick={item.onClick} className="context-menu-item">
               {item.icon}{item.label}
@@ -568,8 +565,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
           {/* Bottom actions */}
           {[
-            { id: `ctx-item-${visibleGroups.length + 2}`, onClick: handleContextHide, icon: <EyeOff size={14} />, label: getText('hideBookmark', lang) },
-            { id: `ctx-item-${visibleGroups.length + 3}`, onClick: handleContextDelete, icon: <Trash2 size={14} />, label: getText('deleteAction', lang), danger: true },
+            { id: `ctx-item-${visibleGroups.length + 2}`, onClick: handleContextHide, icon: <EyeOff size={14} aria-hidden="true" />, label: getText('hideBookmark', lang) },
+            { id: `ctx-item-${visibleGroups.length + 3}`, onClick: handleContextDelete, icon: <Trash2 size={14} aria-hidden="true" />, label: getText('deleteAction', lang), danger: true },
           ].map((item) => (
             <button key={item.id} id={item.id} role="menuitem" onClick={item.onClick} className={`context-menu-item${item.danger ? ' danger' : ''}`}>
               {item.icon}{item.label}

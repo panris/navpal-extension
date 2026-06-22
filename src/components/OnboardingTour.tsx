@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useAppStore, subscribeHydration } from '@/stores/appStore';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import { TOOLTIP_OFFSET, TOOLTIP_WIDTH, TOOLTIP_HEIGHT } from '@/constants';
@@ -60,7 +60,7 @@ interface TooltipProps {
   targetRect: DOMRect | null;
 }
 
-function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targetRect }: TooltipProps) {
+const TourTooltip = memo(({ step, lang, total, current, onNext, onPrev, onSkip, targetRect }: TooltipProps) => {
   const [pos, setPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -160,7 +160,7 @@ function TourTooltip({ step, lang, total, current, onNext, onPrev, onSkip, targe
       </div>
     </div>
   );
-}
+});
 
 export default function OnboardingTour() {
   const lang = useCurrentLang();
@@ -242,19 +242,18 @@ export default function OnboardingTour() {
     };
   }, [step, currentStep.target]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (step < TOUR_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      // Complete - dismiss immediately, persist in background
       setDismissed(true);
       updateSettings({ hasSeenOnboarding: true });
     }
-  };
+  }, [step, updateSettings]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (step > 0) setStep(step - 1);
-  };
+  }, [step]);
 
   return (
     <>

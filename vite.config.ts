@@ -35,6 +35,11 @@ export default defineConfig({
         assetFileNames: 'assets/[name].[ext]',
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
+            if (id.includes('@dnd-kit')) return 'dnd-kit';
+            if (id.includes('zustand')) return 'zustand';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('react-dom')) return 'react-dom';
+            if (id.includes('react')) return 'react';
             return 'vendor';
           }
         },

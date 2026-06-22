@@ -71,6 +71,7 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
+            aria-label={getText('clearSearch', lang)}
             className="search-clear"
           >
             ×

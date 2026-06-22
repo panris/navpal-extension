@@ -200,6 +200,8 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
       <button
         data-tour="settings"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className="header-btn"
       >
         <Settings size={16} />

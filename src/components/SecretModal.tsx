@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Shield, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { MAX_PIN_ATTEMPTS, LOCK_DURATION_MS, SHAKE_ANIM_MS, LOCK_DISMISS_MS, decodeSecret, encodeSecret, isSecretEncoded } from '@/constants';
@@ -106,9 +106,12 @@ export default function SecretModal() {
     : `${remaining} attempts left, locked for 1 min after failure`;
   const lockedText = getText('lockedPleaseRetry', lang);
   const submitText = getText('confirmUnlock', lang);
-  const errorText = remaining <= 0
-    ? lockedText
-    : (lang === 'zh' ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`);
+  const errorText = useMemo(() =>
+    remaining <= 0
+      ? lockedText
+      : (lang === 'zh' ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`),
+    [remaining, lockedText, lang]
+  );
 
   return (
     <div
@@ -172,6 +175,8 @@ export default function SecretModal() {
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, 'del'].map((key, idx) => (
               <button
                 key={idx}
+                aria-label={key === 'del' ? (lang === 'zh' ? '删除' : 'Delete') : (key !== '' ? String(key) : undefined)}
+                disabled={key === '' || remaining <= 0}
                 onClick={() => {
                   if (remaining <= 0) return;
                   if (key === 'del') {
@@ -182,7 +187,6 @@ export default function SecretModal() {
                     setError(false);
                   }
                 }}
-                disabled={key === '' || remaining <= 0}
                 className={`key py-4 text-xl font-semibold ${key === '' ? 'invisible' : ''} ${remaining <= 0 ? 'opacity-40' : ''}`}
               >
                 {key === 'del' ? '⌫' : key}

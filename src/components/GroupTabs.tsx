@@ -46,7 +46,10 @@ export default function GroupTabs() {
     }).length,
   [bookmarks, isRevealMode, lang]);
 
-  const visibleGroups = groups.filter((g) => !g.hidden || isRevealMode);
+  const visibleGroups = useMemo(
+    () => groups.filter((g) => !g.hidden || isRevealMode),
+    [groups, isRevealMode]
+  );
 
   return (
     <div className="group-tabs" data-tour="groups">

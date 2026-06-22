@@ -8,9 +8,12 @@ export default function ResizeHandle({ onMouseDown }: ResizeHandleProps) {
   const lang = useCurrentLang();
   return (
     <div
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={getText('resizeHint', lang)}
+      title={getText('resizeHint', lang)}
       className="resize-handle"
       onMouseDown={onMouseDown}
-      title={getText('resizeHint', lang)}
     >
       <svg
         width="14"
@@ -19,7 +22,6 @@ export default function ResizeHandle({ onMouseDown }: ResizeHandleProps) {
         fill="none"
         className="opacity-40"
       >
-        {/* Corner grip dots */}
         <circle cx="11" cy="11" r="1.2" fill="currentColor" />
         <circle cx="7" cy="11" r="1.2" fill="currentColor" />
         <circle cx="11" cy="7" r="1.2" fill="currentColor" />

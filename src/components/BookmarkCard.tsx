@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, memo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
 import { Lock, EyeOff, Trash2, RotateCcw } from 'lucide-react';
 import { Bookmark, EditMode } from '@/types';
 import { useAppStore } from '@/stores/appStore';
@@ -99,10 +99,14 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   const restoreBookmark = useAppStore((s) => s.restoreBookmark);
   const openBookmark = useAppStore((s) => s.openBookmark);
 
-  const iconStyle = getIconStyle(bookmark.id);
-  const iconLetter = getIconLetter(bookmark.url, bookmark.title);
-  const iconPattern = getIconPattern(bookmark.id);
-  const description = bookmark.description || getDescription(bookmark.url) || { zh: bookmark.title, en: bookmark.title };
+  // Memoized: hash/id-based computations run once per bookmark identity change
+  const iconStyle = useMemo(() => getIconStyle(bookmark.id), [bookmark.id]);
+  const iconPattern = useMemo(() => getIconPattern(bookmark.id), [bookmark.id]);
+  const iconLetter = useMemo(() => getIconLetter(bookmark.url, bookmark.title), [bookmark.url, bookmark.title]);
+  const description = useMemo(
+    () => bookmark.description || getDescription(bookmark.url) || { zh: bookmark.title, en: bookmark.title },
+    [bookmark.description, bookmark.url, bookmark.title]
+  );
 
   // Check states
   const isGroupHidden = bookmark.groupHidden?.[groupId];
@@ -160,16 +164,13 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   // Keyboard/selection focused state
   const isFocused = (isKeyboardSelected || isSelected) && editMode === 'none';
 
-  // Get region label
-  const getRegionLabel = () => {
-    if (bookmark.region === 'CN') {
-      return getText('chinaService', lang);
-    }
-    return getText('globalService', lang);
-  };
+  // Region label — plain const, no function overhead
+  const regionLabel = bookmark.region === 'CN'
+    ? getText('chinaService', lang)
+    : getText('globalService', lang);
 
-  // Action handlers based on edit mode
-  const handleHide = (e: React.MouseEvent) => {
+  // Action handlers based on edit mode — stable references for renderEditActions
+  const handleHide = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (editMode === 'group') {
       updateBookmark(bookmark.id, {
@@ -178,9 +179,9 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
     } else if (editMode === 'global') {
       hideBookmarkGlobally(bookmark.id);
     }
-  };
+  }, [editMode, bookmark.id, groupId, bookmark.groupHidden, updateBookmark, hideBookmarkGlobally]);
 
-  const handleShow = (e: React.MouseEvent) => {
+  const handleShow = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (editMode === 'group') {
       const newGroupHidden = { ...bookmark.groupHidden };
@@ -189,23 +190,23 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
     } else if (editMode === 'global') {
       showBookmarkGlobally(bookmark.id);
     }
-  };
+  }, [editMode, bookmark.id, groupId, bookmark.groupHidden, updateBookmark, showBookmarkGlobally]);
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (editMode === 'group') {
       deleteBookmarkFromGroup(bookmark.id, groupId);
     } else if (editMode === 'global') {
       deleteBookmarkGlobally(bookmark.id);
     }
-  };
+  }, [editMode, bookmark.id, groupId, deleteBookmarkFromGroup, deleteBookmarkGlobally]);
 
-  const handleRestore = (e: React.MouseEvent) => {
+  const handleRestore = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (editMode === 'global') {
       restoreBookmark(bookmark.id);
     }
-  };
+  }, [editMode, bookmark.id, restoreBookmark]);
 
   // Edit mode action buttons
   const renderEditActions = () => {
@@ -399,7 +400,7 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
             color: bookmark.region === 'CN' ? 'var(--region-cn)' : 'var(--region-global)',
           }}>
             <span>{bookmark.region === 'CN' ? getText('regionCN', lang) : getText('regionGlobal', lang)}</span>
-            <span>{getRegionLabel()}</span>
+            <span>{regionLabel}</span>
           </div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
             <div className="border-8 border-transparent border-t-[var(--bg-primary)]" />

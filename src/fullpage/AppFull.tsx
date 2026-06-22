@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, memo, useRef, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useAppStore, useVisibleGroups, useVisibleBookmarks, getEffectiveLang } from '@/stores/appStore';
 import Header from '@/components/Header';
@@ -18,7 +18,7 @@ function formatTime(): string {
   return `${h}:${m}`;
 }
 
-function FullpageLangSwitch() {
+const FullpageLangSwitch = memo(() => {
   const langPref = useAppStore((s) => s.langPref);
   const setLangPref = useAppStore((s) => s.setLangPref);
   const [isOpen, setIsOpen] = useState(false);
@@ -79,7 +79,7 @@ function FullpageLangSwitch() {
       )}
     </div>
   );
-}
+});
 
 export default function AppFull() {
   const isRevealMode = useAppStore((s) => s.isRevealMode);

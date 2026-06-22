@@ -9,6 +9,7 @@ import type { LangPref } from '@/components/BookmarkCard';
 const UI_TEXT = {
   // Header
   appName: { zh: '伴航', en: 'NavPal' },
+  clearSearch: { zh: '清除搜索', en: 'Clear search' },
   appTagline: { zh: '快捷导航工作台', en: 'Quick Navigation Hub' },
   resizeHint: { zh: '拖拽调整大小', en: 'Drag to resize' },
   searchPlaceholder: { zh: '搜索书签...', en: 'Search bookmarks...' },

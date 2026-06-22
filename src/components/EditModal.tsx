@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { ICON_GRADIENTS } from './BookmarkCard';
@@ -38,18 +38,21 @@ export default function EditModal() {
 
   if (editMode === 'none') return null;
 
-  const handleClose = () => setEditMode('none');
+  const handleClose = useCallback(() => setEditMode('none'), [setEditMode]);
 
-  const handleHide = (bookmarkId: string) => hideBookmarkGlobally(bookmarkId);
-  const handleShow = (bookmarkId: string) => showBookmarkGlobally(bookmarkId);
-  const handleDelete = (bookmarkId: string) => deleteBookmarkGlobally(bookmarkId);
-  const handleRestore = (bookmarkId: string) => restoreBookmark(bookmarkId);
+  const handleHide = useCallback((bookmarkId: string) => hideBookmarkGlobally(bookmarkId), [hideBookmarkGlobally]);
+  const handleShow = useCallback((bookmarkId: string) => showBookmarkGlobally(bookmarkId), [showBookmarkGlobally]);
+  const handleDelete = useCallback((bookmarkId: string) => deleteBookmarkGlobally(bookmarkId), [deleteBookmarkGlobally]);
+  const handleRestore = useCallback((bookmarkId: string) => restoreBookmark(bookmarkId), [restoreBookmark]);
 
-  const visibleBookmarks = bookmarks.filter((b) => {
-    if (editMode === 'global') return true;
-    if (editMode === 'group' && activeGroupId) return b.groupId === activeGroupId;
-    return true;
-  });
+  const visibleBookmarks = useMemo(() =>
+    bookmarks.filter((b) => {
+      if (editMode === 'global') return true;
+      if (editMode === 'group' && activeGroupId) return b.groupId === activeGroupId;
+      return true;
+    }),
+    [bookmarks, editMode, activeGroupId]
+  );
 
   return (
     <>

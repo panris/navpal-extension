@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Plus, AlertCircle } from 'lucide-react';
 import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
 import { normalizeUrl } from '@/utils';
@@ -51,6 +51,14 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
 
   const urlInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync selectedGroup once on mount if currently empty (handles case where groups load after modal mounts)
+  useEffect(() => {
+    if (!selectedGroup) {
+      if (activeGroupId) setSelectedGroup(activeGroupId);
+      else if (groups[0]?.id) setSelectedGroup(groups[0].id);
+    }
+  }, []); // intentionally runs once
+
   useEffect(() => {
     urlInputRef.current?.focus();
   }, []);
@@ -63,6 +71,11 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  const gradientClass = useMemo(
+    () => getGradientClass(newUrl || 'navpal'),
+    [newUrl]
+  );
+
   const handleUrlChange = (value: string) => {
     setNewUrl(value);
     if (value.trim()) {
@@ -74,9 +87,9 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
   };
 
   const handleConfirm = () => {
-    const { valid } = validateUrl(newUrl, lang);
+    const { valid, message } = validateUrl(newUrl, lang);
     if (!valid) {
-      setUrlError(validateUrl(newUrl, lang).message);
+      setUrlError(message);
       urlInputRef.current?.focus();
       return;
     }
@@ -126,7 +139,7 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
           {/* Icon + Title + URL row */}
           <div className="add-form-row">
             <div
-              className={`add-form-icon ${getGradientClass(newUrl || 'navpal')}`}
+              className={`add-form-icon ${gradientClass}`}
               title={newTitle || getText('bookmarkTitle', lang)}
             >
               {newTitle ? newTitle.slice(0, 1).toUpperCase() : 'N'}
