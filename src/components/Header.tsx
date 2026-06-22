@@ -19,10 +19,10 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
   const lang = useCurrentLang();
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Debounced search to avoid filtering on every keystroke
+  // Debounced search — debounce factory runs only once (inside useRef initializer)
   const debouncedSetQuery = useRef(
     debounce((q: string) => setSearchQuery(q), SEARCH_DEBOUNCE_MS)
-  ).current;
+  );
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -65,7 +65,7 @@ export default function Header({ onMinimize, onMaximize, onRestore, isMinimized 
           type="text"
           placeholder={getText('searchPlaceholder', lang)}
           value={searchQuery}
-          onChange={(e) => debouncedSetQuery(e.target.value)}
+          onChange={(e) => debouncedSetQuery.current(e.target.value)}
           className="search-input"
         />
         {searchQuery && (

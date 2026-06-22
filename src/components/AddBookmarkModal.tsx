@@ -2,18 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Plus, AlertCircle } from 'lucide-react';
 import { useAppStore, getGroupDisplayName } from '@/stores/appStore';
 import { normalizeUrl } from '@/utils';
-import { ICON_GRADIENTS } from './BookmarkCard';
+import { getIconGradientClass } from '@/utils/iconHash';
 import { useCurrentLang, getText } from '@/utils/i18n';
-
-function getGradientClass(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash;
-  }
-  const index = Math.abs(hash) % ICON_GRADIENTS.length;
-  return `bg-gradient-to-br ${ICON_GRADIENTS[index].bg}`;
-}
 
 function validateUrl(url: string, lang: 'zh' | 'en'): { valid: boolean; message: string } {
   if (!url.trim()) return { valid: false, message: getText('pleaseEnterUrl', lang) };
@@ -72,7 +62,7 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
   }, [onClose]);
 
   const gradientClass = useMemo(
-    () => getGradientClass(newUrl || 'navpal'),
+    () => getIconGradientClass(newUrl || 'navpal'),
     [newUrl]
   );
 

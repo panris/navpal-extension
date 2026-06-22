@@ -1,19 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { ICON_GRADIENTS } from './BookmarkCard';
+import { getIconGradientClass } from '@/utils/iconHash';
 import { useCurrentLang, getText } from '@/utils/i18n';
 import AddBookmarkModal from './AddBookmarkModal';
-
-function getGradientClass(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash;
-  }
-  const index = Math.abs(hash) % ICON_GRADIENTS.length;
-  return `bg-gradient-to-br ${ICON_GRADIENTS[index].bg}`;
-}
 
 function truncate(text: string, maxLen: number): string {
   return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
@@ -97,7 +87,7 @@ export default function EditModal() {
                     key={bookmark.id}
                     className={`bookmark-row${isDeleted ? ' deleted' : ''}`}
                   >
-                    <div className={`bookmark-row-icon ${getGradientClass(bookmark.id)}`}>
+                    <div className={`bookmark-row-icon ${getIconGradientClass(bookmark.id)}`}>
                       {truncate(bookmark.title, 1)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

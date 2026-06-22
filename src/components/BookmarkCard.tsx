@@ -4,23 +4,11 @@ import { Bookmark, EditMode } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
+import { getIconStyle, getIconPattern, getDomain } from '@/utils/iconHash';
 import { useCurrentLang, getText } from '@/utils/i18n';
 
-// Color palette for icons - extracted to shared constant
-export const ICON_GRADIENTS = [
-  { bg: 'from-violet-500 to-purple-600', border: 'border-violet-400', glow: 'shadow-violet-500/30' },
-  { bg: 'from-pink-500 to-rose-500', border: 'border-pink-400', glow: 'shadow-pink-500/30' },
-  { bg: 'from-cyan-500 to-blue-500', border: 'border-cyan-400', glow: 'shadow-cyan-500/30' },
-  { bg: 'from-emerald-500 to-teal-500', border: 'border-emerald-400', glow: 'shadow-emerald-500/30' },
-  { bg: 'from-orange-500 to-amber-500', border: 'border-orange-400', glow: 'shadow-orange-500/30' },
-  { bg: 'from-rose-400 to-pink-500', border: 'border-rose-400', glow: 'shadow-rose-500/30' },
-  { bg: 'from-indigo-500 to-violet-500', border: 'border-indigo-400', glow: 'shadow-indigo-500/30' },
-  { bg: 'from-fuchsia-500 to-purple-500', border: 'border-fuchsia-400', glow: 'shadow-fuchsia-500/30' },
-  { bg: 'from-sky-500 to-cyan-500', border: 'border-sky-400', glow: 'shadow-sky-500/30' },
-  { bg: 'from-lime-500 to-emerald-500', border: 'border-lime-400', glow: 'shadow-lime-500/30' },
-];
-
-export type LangPref = 'auto' | 'zh' | 'en';
+export { ICON_GRADIENTS } from '@/utils/iconHash';
+export type { LangPref } from '@/utils/iconHash';
 
 export function getLangPref(): LangPref {
   return useAppStore.getState().langPref;
@@ -28,49 +16,6 @@ export function getLangPref(): LangPref {
 
 export function setLangPref(pref: LangPref) {
   useAppStore.getState().setLangPref(pref);
-}
-
-function getIconStyle(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return ICON_GRADIENTS[Math.abs(hash) % ICON_GRADIENTS.length];
-}
-
-function getIconLetter(url: string, title: string): string {
-  try {
-    const hostname = new URL(url).hostname;
-    const parts = hostname.split('.');
-    if (parts.length >= 2) {
-      const secondLevel = parts[parts.length - 2];
-      if (secondLevel.length > 1) {
-        return secondLevel.charAt(0).toUpperCase();
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return title.trim().charAt(0).toUpperCase() || '?';
-}
-
-function getIconPattern(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash;
-  }
-  const patterns = ['●', '■', '▲', '★', '◆'];
-  return patterns[Math.abs(hash) % patterns.length];
-}
-
-function getDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace('www.', '');
-  } catch {
-    return url;
-  }
 }
 
 interface BookmarkCardProps {

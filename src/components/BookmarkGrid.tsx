@@ -240,13 +240,23 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     setContextMenu(null);
   }, [contextMenu, hideBookmarkGlobally]);
 
-  // Count all menu items (copy, open, move-to groups, hide, delete)
+  // Menu item count: 2 copy/open + N groups + 2 hide/delete
+  // Groups visible in the move-to submenu (exclude current group)
   const visibleGroups = useMemo(() =>
     groups.filter((g) => {
       const excludeId = contextMenu?.activeGroupId ?? contextMenu?.bookmarkGroupId ?? null;
       return g.id !== excludeId;
-    }), [groups, contextMenu?.activeGroupId, contextMenu?.bookmarkGroupId]);
-  const menuItemCount = useMemo(() => 2 + visibleGroups.length + 2, [visibleGroups.length]); // copy + open + groups + hide + delete
+    }),
+    [groups, contextMenu?.activeGroupId, contextMenu?.bookmarkGroupId]
+  );
+
+  // Menu item count: 2 copy/open + N groups + 2 hide/delete
+  const MENU_TOP_ITEMS = 2;
+  const MENU_BOTTOM_ITEMS = 2;
+  const menuItemCount = useMemo(
+    () => MENU_TOP_ITEMS + visibleGroups.length + MENU_BOTTOM_ITEMS,
+    [visibleGroups.length]
+  );
 
   // Context menu keyboard navigation — useCallback to keep identity stable for useEffect dep
   const handleContextKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -307,8 +317,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     [activeGroupId, bookmarksState, isRevealMode, lang]
   );
 
-  const handleDragStart = () => setIsDragging(true);
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragStart = useCallback(() => setIsDragging(true), []);
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setIsDragging(false);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -321,7 +331,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
     const newOrder = arrayMove(bookmarkIds, oldIndex, newIndex);
     reorderBookmarks(targetGroupId, newOrder);
-  };
+  }, [activeGroupId, bookmarkIds, reorderBookmarks]);
 
   return (
     <div>
