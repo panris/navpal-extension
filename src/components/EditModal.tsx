@@ -26,10 +26,7 @@ export default function EditModal() {
     if (editMode !== 'none') setShowAddModal(false);
   }, [editMode]);
 
-  if (editMode === 'none') return null;
-
   const handleClose = useCallback(() => setEditMode('none'), [setEditMode]);
-
   const handleHide = useCallback((bookmarkId: string) => hideBookmarkGlobally(bookmarkId), [hideBookmarkGlobally]);
   const handleShow = useCallback((bookmarkId: string) => showBookmarkGlobally(bookmarkId), [showBookmarkGlobally]);
   const handleDelete = useCallback((bookmarkId: string) => deleteBookmarkGlobally(bookmarkId), [deleteBookmarkGlobally]);
@@ -43,6 +40,8 @@ export default function EditModal() {
     }),
     [bookmarks, editMode, activeGroupId]
   );
+
+  if (editMode === 'none') return null;
 
   return (
     <>

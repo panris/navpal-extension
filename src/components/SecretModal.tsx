@@ -96,9 +96,7 @@ export default function SecretModal() {
     }
   };
 
-  if (!isOpen) return null;
-
-  // I18n text
+  // I18n text — computed before early return to keep hook order consistent
   const titleText = getText('enterSecret', lang);
   const hintText = getText('secretHintFull', lang);
   const lockWarningText = lang === 'zh'
@@ -112,6 +110,8 @@ export default function SecretModal() {
       : (lang === 'zh' ? `暗号错误，还剩 ${remaining} 次机会` : `Wrong code, ${remaining} attempts left`),
     [remaining, lockedText, lang]
   );
+
+  if (!isOpen) return null;
 
   return (
     <div

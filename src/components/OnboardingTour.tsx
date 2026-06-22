@@ -218,16 +218,22 @@ export default function OnboardingTour() {
     return () => window.removeEventListener('keydown', handler);
   }, [handleSkip]);
 
-  // Don't render anything until hydration is complete
-  if (!isHydrated) return null;
-
-  // Early return if dismissed or already seen
-  if (dismissed || hasSeenOnboarding) return null;
-
-  const currentStep = TOUR_STEPS[step];
-
-  // Stable updateRect ref — avoids remove/re-add listener thrash on every step change
+  // Hooks used by the tour tooltip rendering (must be before any early returns)
+  const currentStep = step < TOUR_STEPS.length ? TOUR_STEPS[step] : TOUR_STEPS[0];
   const updateRectRef = useRef<() => void>(() => {});
+  const handleNext = useCallback(() => {
+    if (step < TOUR_STEPS.length - 1) {
+      setStep(step + 1);
+    } else {
+      setDismissed(true);
+      updateSettings({ hasSeenOnboarding: true });
+    }
+  }, [step, updateSettings]);
+
+  const handlePrev = useCallback(() => {
+    if (step > 0) setStep(step - 1);
+  }, [step]);
+
   updateRectRef.current = () => {
     const el = document.querySelector(currentStep.target);
     setTargetRect(el ? el.getBoundingClientRect() : null);
@@ -242,18 +248,11 @@ export default function OnboardingTour() {
     };
   }, [step, currentStep.target]);
 
-  const handleNext = useCallback(() => {
-    if (step < TOUR_STEPS.length - 1) {
-      setStep(step + 1);
-    } else {
-      setDismissed(true);
-      updateSettings({ hasSeenOnboarding: true });
-    }
-  }, [step, updateSettings]);
+  // Don't render anything until hydration is complete
+  if (!isHydrated) return null;
 
-  const handlePrev = useCallback(() => {
-    if (step > 0) setStep(step - 1);
-  }, [step]);
+  // Early return if dismissed or already seen
+  if (dismissed || hasSeenOnboarding) return null;
 
   return (
     <>
