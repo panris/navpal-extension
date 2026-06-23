@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppState, Group, Bookmark, EditMode } from '@/types';
+import type { AppState, Group, Bookmark, EditMode } from '@/types';
 import { generateId } from '@/utils';
 import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/seedData';
 import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
@@ -407,7 +407,7 @@ export const useLangGroupBookmarks = (groupId: string | null) =>
     const visibleGroups = state.groups.filter((g) => !g.hidden || isRevealMode);
 
     // 过滤书签
-    let filteredBookmarks = state.bookmarks.filter((b) => {
+    const filteredBookmarks = state.bookmarks.filter((b) => {
       // 如果指定了分组，只显示该分组的书签
       if (groupId !== null && b.groupId !== groupId) return false;
 

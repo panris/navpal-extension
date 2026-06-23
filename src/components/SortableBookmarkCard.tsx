@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Bookmark } from '@/types';
+import type { Bookmark } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import BookmarkCard from './BookmarkCard';
 import { cn } from '@/utils/cn';

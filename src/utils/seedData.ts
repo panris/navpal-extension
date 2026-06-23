@@ -1,6 +1,6 @@
 // 初始 Seed Data - 85个常用网站（含中英文介绍）
 
-import { Group, Bookmark } from '@/types';
+import type { Group, Bookmark } from '@/types';
 import { generateId } from '@/utils';
 import { CURRENT_SCHEMA_VERSION, generateDefaultSecretCode, encodeSecret } from '@/constants';
 

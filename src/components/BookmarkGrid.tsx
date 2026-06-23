@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
+import type {
+  DragEndEvent} from '@dnd-kit/core';
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
-  DragEndEvent,
+  useSensors
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -14,7 +15,7 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Bookmark } from '@/types';
+import type { Bookmark } from '@/types';
 import { useAppStore, isBookmarkVisibleInGroup, getGroupDisplayName } from '@/stores/appStore';
 import { CONTEXT_MENU_HEIGHT } from '@/constants';
 import { isBookmarkVisible } from '@/utils/bookmarkVisibility';

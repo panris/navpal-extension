@@ -1,4 +1,4 @@
-import { Group, Bookmark, AppSettings } from '@/types';
+import type { Group, Bookmark, AppSettings } from '@/types';
 import { CURRENT_SCHEMA_VERSION } from '@/constants';
 
 export interface ExportData {

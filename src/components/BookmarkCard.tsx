@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
 import { Lock, EyeOff, Trash2, RotateCcw } from 'lucide-react';
-import { Bookmark, EditMode } from '@/types';
+import type { Bookmark, EditMode } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
