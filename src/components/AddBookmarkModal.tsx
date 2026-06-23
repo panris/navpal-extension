@@ -41,13 +41,13 @@ export default function AddBookmarkModal({ onClose }: AddBookmarkModalProps) {
 
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync selectedGroup once on mount if currently empty (handles case where groups load after modal mounts)
+  // Sync selectedGroup when groups become available (handles async hydration)
   useEffect(() => {
     if (!selectedGroup) {
       if (activeGroupId) setSelectedGroup(activeGroupId);
       else if (groups[0]?.id) setSelectedGroup(groups[0].id);
     }
-  }, []); // intentionally runs once
+  }, [selectedGroup, groups, activeGroupId]);
 
   useEffect(() => {
     urlInputRef.current?.focus();
