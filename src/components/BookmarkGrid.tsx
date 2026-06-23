@@ -134,34 +134,17 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       const bookmark = sortedBookmarks[index];
       if (bookmark) openBookmark(bookmark.id);
     },
+    onSpace: (index) => {
+      const bm = sortedBookmarks[index];
+      if (!bm) return;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(bm.id)) next.delete(bm.id);
+        else next.add(bm.id);
+        return next;
+      });
+    },
   });
-
-  // Batch selection: Space key toggles the focused bookmark.
-  // Uses sortedBookmarks (not raw state.bookmarks) so the index maps correctly.
-  const handleSpaceKey = useCallback((index: number) => {
-    const bm = sortedBookmarks[index];
-    if (!bm) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(bm.id)) next.delete(bm.id);
-      else next.add(bm.id);
-      return next;
-    });
-  }, [sortedBookmarks]);
-
-  // Sync Space handler into keyboard nav hook
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key === ' ' && !e.ctrlKey && !e.metaKey && editMode === 'none' && !searchQuery) {
-        e.preventDefault();
-        if (selectedIndex >= 0) handleSpaceKey(selectedIndex);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [selectedIndex, handleSpaceKey, editMode, searchQuery]);
 
   // Close context menu on outside click
   useEffect(() => {
