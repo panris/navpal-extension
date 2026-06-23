@@ -123,8 +123,11 @@ export default function AppFull() {
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     switch (e.key) {
       case '/':
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('navpal:focus', { detail: { focus: 'search' } }));
+        break;
       case 'k':
-        if (e.ctrlKey || e.key === '/' || e.key === 'k') {
+        if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent('navpal:focus', { detail: { focus: 'search' } }));
         }
