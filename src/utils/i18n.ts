@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore, subscribeLang, getEffectiveLang } from '@/stores/appStore';
-import type { LangPref } from '@/components/BookmarkCard';
+import type { LangPref } from '@/types';
 
 // ─── 静态翻译文本 ───────────────────────────────────────────────
 const UI_TEXT = {

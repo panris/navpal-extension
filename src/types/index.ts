@@ -1,5 +1,7 @@
 // 数据类型定义
 
+export type LangPref = 'auto' | 'zh' | 'en';
+
 export interface Bookmark {
   id: string;
   title: string;

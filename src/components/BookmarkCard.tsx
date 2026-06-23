@@ -1,14 +1,12 @@
 import React, { useState, useRef, useCallback, useMemo, memo } from 'react';
 import { Lock, EyeOff, Trash2, RotateCcw } from 'lucide-react';
 import type { Bookmark, EditMode } from '@/types';
+import type { LangPref } from '@/types';
 import { useAppStore } from '@/stores/appStore';
 import { cn } from '@/utils/cn';
 import { getDescription } from '@/utils/descriptions';
 import { getIconStyle, getIconPattern, getIconLetter, getDomain } from '@/utils/iconHash';
 import { useCurrentLang, getText } from '@/utils/i18n';
-
-export { ICON_GRADIENTS } from '@/utils/iconHash';
-export type { LangPref } from '@/utils/iconHash';
 
 export function getLangPref(): LangPref {
   return useAppStore.getState().langPref;

@@ -5,7 +5,7 @@ import { useAppStore, type ThemeName, getGroupDisplayName } from '@/stores/appSt
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
 import { useCurrentLang, getText, LANG_OPTIONS, getLangOptionLabel } from '@/utils/i18n';
 import ConfirmModal from './ConfirmModal';
-import type { LangPref } from './BookmarkCard';
+import type { LangPref } from '@/types';
 
 function getGroupIcon(icon: string | undefined): React.ReactNode {
   switch (icon) {

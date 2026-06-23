@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AppState, Group, Bookmark, EditMode } from '@/types';
+import type { LangPref } from '@/types';
 import { generateId } from '@/utils';
 import { DEFAULT_GROUPS, DEFAULT_BOOKMARKS, DEFAULT_SETTINGS } from '@/utils/seedData';
 import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/constants';
-import type { LangPref } from '@/components/BookmarkCard';
 
 // Theme types
 export type ThemeName = 'light' | 'dark' | 'purple' | 'minimal';
