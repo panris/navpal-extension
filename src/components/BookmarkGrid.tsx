@@ -137,10 +137,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
   });
 
   // Batch selection: Space key toggles the focused bookmark.
-  // Uses getState() so the callback never needs sortedBookmarks as a dependency.
+  // Uses sortedBookmarks (not raw state.bookmarks) so the index maps correctly.
   const handleSpaceKey = useCallback((index: number) => {
-    const state = useAppStore.getState();
-    const bm = state.bookmarks[index];
+    const bm = sortedBookmarks[index];
     if (!bm) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -148,7 +147,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       else next.add(bm.id);
       return next;
     });
-  }, []);
+  }, [sortedBookmarks]);
 
   // Sync Space handler into keyboard nav hook
   useEffect(() => {
