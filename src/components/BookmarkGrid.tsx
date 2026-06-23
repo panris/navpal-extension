@@ -199,6 +199,8 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
   const handleContextMenu = useCallback((e: React.MouseEvent, bookmarkId: string) => {
     e.preventDefault();
+    // Don't show context menu in edit mode — edit action buttons are shown instead
+    if (editMode !== 'none') return;
     const x = Math.min(e.clientX, window.innerWidth - 200);
     const menuHeight = CONTEXT_MENU_HEIGHT;
     const flipped = e.clientY + menuHeight > window.innerHeight - 8;
@@ -206,7 +208,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     const maxHeight = Math.min(menuHeight, availableBelow - 8);
     const bookmarkGroupId = bookmarksState.find((b) => b.id === bookmarkId)?.groupId ?? null;
     setContextMenu({ bookmarkId, bookmarkGroupId, activeGroupId, x, y: e.clientY, flipped, maxHeight: Math.max(120, maxHeight) });
-  }, [bookmarksState, activeGroupId]);
+  }, [bookmarksState, activeGroupId, editMode]);
 
   // Context menu actions — use getState() to avoid unnecessary deps
   const handleContextCopyUrl = useCallback(() => {
