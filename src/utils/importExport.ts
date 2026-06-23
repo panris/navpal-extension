@@ -42,14 +42,49 @@ export function validateImportData(raw: unknown): { valid: boolean; data?: Expor
     return { valid: false, error: '缺少 settings 字段' };
   }
 
-  // Basic type checks
+  // Thorough type checks for groups
   const validGroup = obj.groups.every(
-    (g: unknown) =>
-      typeof g === 'object' && g !== null && typeof (g as Group).id === 'string'
+    (g: unknown) => {
+      if (typeof g !== 'object' || g === null) return false;
+      const group = g as Record<string, unknown>;
+      if (typeof group.id !== 'string' || !group.id) return false;
+      if (typeof group.name !== 'string') return false;
+      if (typeof group.hidden !== 'boolean') return false;
+      if (typeof group.order !== 'number') return false;
+      if (typeof group.createdAt !== 'number') return false;
+      if (typeof group.updatedAt !== 'number') return false;
+      if (group.nameI18n !== undefined) {
+        if (typeof group.nameI18n !== 'object' || group.nameI18n === null) return false;
+        const n = group.nameI18n as Record<string, unknown>;
+        if (typeof n.zh !== 'string' || typeof n.en !== 'string') return false;
+      }
+      return true;
+    }
   );
+  // Thorough type checks for bookmarks
   const validBookmark = obj.bookmarks.every(
-    (b: unknown) =>
-      typeof b === 'object' && b !== null && typeof (b as Bookmark).id === 'string'
+    (b: unknown) => {
+      if (typeof b !== 'object' || b === null) return false;
+      const bm = b as Record<string, unknown>;
+      if (typeof bm.id !== 'string' || !bm.id) return false;
+      if (typeof bm.title !== 'string' || !bm.title) return false;
+      if (typeof bm.url !== 'string' || !bm.url) return false;
+      try { new URL(bm.url as string); } catch { return false; }
+      if (typeof bm.groupId !== 'string' || !bm.groupId) return false;
+      if (typeof bm.order !== 'number') return false;
+      if (typeof bm.hidden !== 'boolean') return false;
+      if (bm.region !== null && bm.region !== 'CN' && bm.region !== 'Global') return false;
+      if (typeof bm.regionManual !== 'boolean') return false;
+      if (typeof bm.createdAt !== 'number') return false;
+      if (typeof bm.updatedAt !== 'number') return false;
+      if (bm.deletedAt !== null && bm.deletedAt !== undefined && typeof bm.deletedAt !== 'number') return false;
+      if (bm.description !== undefined) {
+        if (typeof bm.description !== 'object' || bm.description === null) return false;
+        const d = bm.description as Record<string, unknown>;
+        if (typeof d.zh !== 'string' || typeof d.en !== 'string') return false;
+      }
+      return true;
+    }
   );
 
   if (!validGroup) return { valid: false, error: 'groups 格式错误' };
