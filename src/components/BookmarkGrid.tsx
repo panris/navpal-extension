@@ -322,6 +322,9 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    // Only allow reorder in edit mode
+    if (editMode === 'none') return;
+
     const targetGroupId = activeGroupId;
 
     const oldIndex = bookmarkIds.indexOf(String(active.id));
@@ -330,7 +333,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
 
     const newOrder = arrayMove(bookmarkIds, oldIndex, newIndex);
     reorderBookmarks(targetGroupId, newOrder);
-  }, [activeGroupId, bookmarkIds, reorderBookmarks]);
+  }, [activeGroupId, bookmarkIds, reorderBookmarks, editMode]);
 
   return (
     <div>
