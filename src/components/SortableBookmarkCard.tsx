@@ -71,5 +71,7 @@ export default memo(SortableBookmarkCardInner, (prev, next) => {
   return prev.bookmark.id === next.bookmark.id &&
     prev.groupId === next.groupId &&
     prev.isDragging === next.isDragging &&
-    prev.isSelected === next.isSelected;
+    prev.isSelected === next.isSelected &&
+    prev.isKeyboardSelected === next.isKeyboardSelected &&
+    prev.editMode === next.editMode;
 });
