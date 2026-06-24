@@ -24,6 +24,13 @@ export function useKeyboardNavigation({
   /** Batch selection: IDs of selected bookmarks */
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Stable ref so handleKeyDown doesn't need selectedIndex in its deps
+  const selectedIndexRef = useRef(selectedIndex);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    selectedIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
 
   const select = useCallback(
     (index: number) => {
@@ -123,21 +130,21 @@ export function useKeyboardNavigation({
           break;
         case 'Enter':
           e.preventDefault();
-          if (selectedIndex >= 0 && onEnter) {
-            onEnter(selectedIndex);
+          if (selectedIndexRef.current >= 0 && onEnter) {
+            onEnter(selectedIndexRef.current);
           }
           break;
         case ' ':
           e.preventDefault();
-          if (selectedIndex >= 0 && onSpace) {
-            onSpace(selectedIndex);
+          if (selectedIndexRef.current >= 0 && onSpace) {
+            onSpace(selectedIndexRef.current);
           }
           break;
         case 'Delete':
         case 'Backspace':
-          if (selectedIndex >= 0 && onDelete) {
+          if (selectedIndexRef.current >= 0 && onDelete) {
             e.preventDefault();
-            onDelete(selectedIndex);
+            onDelete(selectedIndexRef.current);
           }
           break;
         case 'Escape':
@@ -154,7 +161,7 @@ export function useKeyboardNavigation({
           break;
       }
     },
-    [enabled, selectedIndex, totalItems, moveRight, moveLeft, moveDown, moveUp, onEnter, onSpace, onDelete]
+    [enabled, totalItems, moveRight, moveLeft, moveDown, moveUp, onEnter, onSpace, onDelete]
   );
 
   useEffect(() => {
