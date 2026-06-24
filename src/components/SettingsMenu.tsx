@@ -3,6 +3,7 @@ import { Settings, Plus, Trash2, Edit3, Download, Upload, Sparkles, Code, Palett
 import { cn } from '@/utils/cn';
 import { useAppStore, type ThemeName, getGroupDisplayName } from '@/stores/appStore';
 import { exportData, validateImportData, downloadJson, readJsonFile } from '@/utils/importExport';
+import { STORAGE_QUOTA_KB } from '@/constants';
 import { useCurrentLang, getText, LANG_OPTIONS, getLangOptionLabel } from '@/utils/i18n';
 import ConfirmModal from './ConfirmModal';
 import type { LangPref } from '@/types';
@@ -388,7 +389,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${Math.min(parseFloat(storageKB), 100)}%`, background: 'var(--accent-color)' }}
+                    style={{ width: `${Math.min((parseFloat(storageKB) / STORAGE_QUOTA_KB) * 100, 100)}%`, background: 'var(--accent-color)' }}
                   />
                 </div>
               </div>
