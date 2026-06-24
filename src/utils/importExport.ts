@@ -141,18 +141,3 @@ export async function readJsonFile(file: File): Promise<unknown> {
     reader.readAsText(file);
   });
 }
-
-/** 搜索文本转义（用于搜索高亮或正则匹配） */
-export function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** Favicon URL 生成（可选 Google Favicon API） */
-export function getFaviconUrl(url: string, size = 32): string {
-  try {
-    const hostname = new URL(url).hostname;
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=${size}`;
-  } catch {
-    return '';
-  }
-}

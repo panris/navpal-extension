@@ -284,13 +284,6 @@ export const useAppStore = create<
         }));
       },
 
-      // 彻底删除书签（不可恢复）
-      hardDeleteBookmark: (id: string) => {
-        set((state) => ({
-          bookmarks: state.bookmarks.filter((b) => b.id !== id),
-        }));
-      },
-
       // 记录访问时间（最近使用排序用）
       recordAccess: (id) => {
         set((state) => ({
