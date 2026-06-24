@@ -68,6 +68,15 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
   const [importMsgType, setImportMsgType] = useState<'success' | 'error' | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; count: number } | null>(null);
 
+  // Memoize group bookmark counts to avoid repeated filter calls
+  const groupBookmarkCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    bookmarks.forEach((b) => {
+      counts.set(b.groupId, (counts.get(b.groupId) || 0) + 1);
+    });
+    return counts;
+  }, [bookmarks]);
+
   // Focus trap: save focus on open, move to first menu item, restore on close
   useEffect(() => {
     if (isOpen) {
@@ -123,7 +132,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
   };
 
   const handleDeleteGroup = (id: string) => {
-    const count = bookmarks.filter((b) => b.groupId === id).length;
+    const count = groupBookmarkCounts.get(id) || 0;
     const group = groups.find((g) => g.id === id);
     const name = group ? getGroupDisplayName(group, lang) : id;
     if (count > 0) {
@@ -334,7 +343,7 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
               {/* Group List */}
               <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
                 {groups.map((group) => {
-                  const count = bookmarks.filter((b) => b.groupId === group.id).length;
+                  const count = groupBookmarkCounts.get(group.id) || 0;
                   return (
                     <div key={group.id} className="settings-group-row">
                       <span className="text-base">{getGroupIcon(group.icon)}</span>
