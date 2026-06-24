@@ -351,16 +351,16 @@ export const useAppStore = create<
 
 // ─── Language-aware Selectors ──────────────────────────────────────
 export const useVisibleGroups = () =>
-  useAppStore((state) => {
-    if (state.isRevealMode) return state.groups;
-    return state.groups.filter((g) => !g.hidden);
-  });
+  useAppStore(
+    (state) => (state.isRevealMode ? state.groups : state.groups.filter((g) => !g.hidden)),
+    (a, b) => a.length === b.length && a.every((g, i) => g.id === b[i].id)
+  );
 
 export const useVisibleBookmarks = () =>
-  useAppStore((state) => {
-    if (state.isRevealMode) return state.bookmarks;
-    return state.bookmarks.filter((b) => !b.hidden);
-  });
+  useAppStore(
+    (state) => (state.isRevealMode ? state.bookmarks : state.bookmarks.filter((b) => !b.hidden)),
+    (a, b) => a.length === b.length && a.every((bm, i) => bm.id === b[i].id)
+  );
 
 // 获取当前有效语言
 function getCurrentLang(): 'zh' | 'en' {

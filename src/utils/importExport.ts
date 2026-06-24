@@ -90,6 +90,19 @@ export function validateImportData(raw: unknown): { valid: boolean; data?: Expor
   if (!validGroup) return { valid: false, error: 'groups 格式错误' };
   if (!validBookmark) return { valid: false, error: 'bookmarks 格式错误' };
 
+  // Validate groupId references (prevent orphan bookmarks)
+  const groupIds = new Set(obj.groups.map((g: Record<string, unknown>) => g.id as string));
+  const orphanGroupIds = new Set<string>();
+  obj.bookmarks.forEach((b: Record<string, unknown>) => {
+    const groupId = b.groupId as string;
+    if (!groupIds.has(groupId)) {
+      orphanGroupIds.add(groupId);
+    }
+  });
+  if (orphanGroupIds.size > 0) {
+    return { valid: false, error: `发现孤立书签：groupId ${[...orphanGroupIds].join(', ')} 不存在` };
+  }
+
   // Validate critical settings fields to prevent migration crashes
   const settings = obj.settings as Record<string, unknown>;
   if (typeof settings.schemaVersion !== 'number') {
