@@ -252,22 +252,26 @@ export default function SettingsMenu({ onMinimize, onMaximize, onRestore, isMini
                 ))}
               </div>
 
-              {/* Window Controls */}
-              <p className="settings-section-title" style={{ marginTop: '16px' }}>{getText('windowControls', lang)}</p>
-              <div className="settings-row">
-                <button
-                  onClick={() => { isMinimized ? onRestore?.() : onMinimize?.(); setIsOpen(false); }}
-                  className="settings-btn"
-                >
-                  {isMinimized ? getText('expand', lang) : getText('minimize', lang)}
-                </button>
-                <button
-                  onClick={() => { onMaximize?.(); setIsOpen(false); }}
-                  className="settings-btn"
-                >
-                  {getText('maximize', lang)}
-                </button>
-              </div>
+              {/* Window Controls — only shown when callbacks are wired (popup mode) */}
+              {(onMinimize || onMaximize) && (
+                <>
+                  <p className="settings-section-title" style={{ marginTop: '16px' }}>{getText('windowControls', lang)}</p>
+                  <div className="settings-row">
+                    <button
+                      onClick={() => { isMinimized ? onRestore?.() : onMinimize?.(); setIsOpen(false); }}
+                      className="settings-btn"
+                    >
+                      {isMinimized ? getText('expand', lang) : getText('minimize', lang)}
+                    </button>
+                    <button
+                      onClick={() => { onMaximize?.(); setIsOpen(false); }}
+                      className="settings-btn"
+                    >
+                      {getText('maximize', lang)}
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* Language */}
               <p className="settings-section-title" style={{ marginTop: '16px' }}>{getText('interfaceLanguage', lang)}</p>
