@@ -9,21 +9,11 @@ import { STORAGE_QUOTA_KB, STORAGE_WARN_RATIO, CURRENT_SCHEMA_VERSION } from '@/
 // Theme types
 export type ThemeName = 'light' | 'dark' | 'purple' | 'minimal';
 
-// ─── Theme event bus ─────────────────────────────────────────────
-type ThemeListener = (theme: ThemeName) => void;
-const themeListeners = new Set<ThemeListener>();
-
-export function subscribeTheme(listener: ThemeListener): () => void {
-  themeListeners.add(listener);
-  return () => themeListeners.delete(listener);
-}
-
 export function notifyThemeChange(theme: ThemeName) {
   // Apply theme to document (guard for non-renderer contexts)
   if (typeof document !== 'undefined') {
     document.documentElement.setAttribute('data-theme', theme);
   }
-  themeListeners.forEach((l) => l(theme));
 }
 
 // ─── Storage quota ───────────────────────────────────────────────
