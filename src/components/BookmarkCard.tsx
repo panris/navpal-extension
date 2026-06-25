@@ -46,7 +46,7 @@ function BookmarkCardInner({ bookmark, groupId, editMode, isKeyboardSelected, is
   const isGroupHidden = bookmark.groupHidden?.[groupId];
   const isGroupDeleted = bookmark.groupDeleted?.[groupId];
   const isGloballyHidden = bookmark.hidden;
-  const isGloballyDeleted = bookmark.deletedAt !== null && bookmark.deletedAt !== undefined;
+  const isGloballyDeleted = bookmark.deletedAt != null;
   const isDeleted = isGloballyDeleted;
   const isCardHidden = isGloballyHidden || isGroupHidden;
 

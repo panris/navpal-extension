@@ -356,7 +356,7 @@ function getCurrentLang(): 'zh' | 'en' {
 // 判断书签在指定分组中是否可见
 export function isBookmarkVisibleInGroup(bookmark: Bookmark, groupId: string, isRevealMode: boolean): boolean {
   // 全局软删除的书签：仅在全量模式可见
-  if (bookmark.deletedAt !== null && bookmark.deletedAt !== undefined && !isRevealMode) {
+  if (bookmark.deletedAt != null && !isRevealMode) {
     return false;
   }
 

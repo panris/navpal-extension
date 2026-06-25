@@ -77,7 +77,7 @@ export function validateImportData(raw: unknown): { valid: boolean; data?: Expor
       if (typeof bm.regionManual !== 'boolean') return false;
       if (typeof bm.createdAt !== 'number') return false;
       if (typeof bm.updatedAt !== 'number') return false;
-      if (bm.deletedAt !== null && bm.deletedAt !== undefined && typeof bm.deletedAt !== 'number') return false;
+      if (bm.deletedAt != null && typeof bm.deletedAt !== 'number') return false;
       if (bm.description !== undefined) {
         if (typeof bm.description !== 'object' || bm.description === null) return false;
         const d = bm.description as Record<string, unknown>;

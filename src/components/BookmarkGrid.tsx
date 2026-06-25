@@ -103,7 +103,7 @@ export default function BookmarkGrid({ bookmarks }: BookmarkGridProps) {
       if (b.groupId !== activeGroupId) return false;
     }
     if (editMode === 'global') {
-      if (b.deletedAt === null || b.deletedAt === undefined) return true;
+      if (b.deletedAt == null) return true;
       if (isRevealMode) return true;
       return false;
     }
