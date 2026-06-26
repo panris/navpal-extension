@@ -2,18 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-// Vite plugin: remove crossorigin attribute from HTML (Chrome extension fix)
-function removeCrossorigin() {
+// Vite plugin: fix HTML for Chrome extension compatibility
+function fixChromeExtensionHtml() {
   return {
-    name: 'remove-crossorigin',
+    name: 'fix-chrome-extension-html',
     transformIndexHtml(html: string) {
-      return html.replace(/\s+crossorigin(?:="[^"]*")?/g, '');
+      return html
+        // MV3 CSP disallows crossorigin on module scripts
+        .replace(/\s+crossorigin(?:="[^"]*")?/g, '')
+        // modulepreload links are unnecessary for Chrome extensions
+        .replace(/<link[^>]*rel="modulepreload"[^>]*>\s*/g, '');
     },
   };
 }
 
 export default defineConfig({
-  plugins: [react(), removeCrossorigin()],
+  plugins: [react(), fixChromeExtensionHtml()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

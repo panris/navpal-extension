@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 
-const sizes = [16, 48, 128];
+const sizes = [128];
 const iconsDir = join(rootDir, 'dist', 'icons');
 
 // 简单的SVG图标内容
@@ -37,7 +37,7 @@ async function generateIcons() {
     console.log(`✓ Generated icon${size}.png`);
   }
 
-  // 512尺寸（用于Chrome Web Store）
+  // 512尺寸（用于Chrome Web Store listing）
   await sharp(svgBuffer)
     .resize(512, 512)
     .png()
