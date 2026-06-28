@@ -27,7 +27,6 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     cssCodeSplit: false, // Combine all CSS into one file for Chrome extensions
-    modulePreload: false, // Chrome extension doesn't need Vite's modulepreload polyfill
     rollupOptions: {
       input: {
         background: './src/background/index.ts',
