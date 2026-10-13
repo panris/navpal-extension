@@ -4,22 +4,58 @@
 
 ## 核心特性
 
-- **即用即走** - 点击图标即可展开 Popup，无需打开新标签页
-- **分组管理** - 按属性（AI工具、开发、后台、娱乐等）分块看板展示
-- **地域标识** - 自动识别国内外网站 (CN/Global 标签)
-- **隐私保护** - 隐藏项完全不渲染 DOM，无痕模式安全切换
-- **极速体验** - 首屏 FCP 控制在 120ms 以内
+- **即用即走** — 点击图标即可展开 Popup，无需打开新标签页
+- **分组管理** — 按属性（AI 工具、开发、后台、娱乐等）分块看板，85+ 精选书签即装即用
+- **地域标识** — 自动识别国内外网站（CN/Global 标签），根据语言智能过滤
+- **隐私保护** — 隐藏项完全不渲染 DOM，3 位 PIN 码解锁无痕模式，3 次失败后自动锁定
+- **拖拽排序** — 编辑模式下自由拖拽排列书签
+- **批量操作** — 勾选多个书签进行批量隐藏/删除/移动
+- **键盘导航** — 完整方向键 + 快捷键支持
+- **中英双语** — 100+ UI 文本完整翻译
+- **数据导入导出** — JSON 格式备份恢复，含严格类型验证
+
+## 安装方式
+
+### 方式一：Edge 扩展商店（推荐，免费）
+
+*即将上线* — 从 Microsoft Edge Add-ons 商店一键安装。
+
+### 方式二：Chrome / Edge 开发者模式加载
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/panris/navpal-extension.git
+cd navpal-extension
+
+# 2. 安装依赖
+npm install
+
+# 3. 构建
+npm run build
+```
+
+4. 打开浏览器扩展管理页面：
+   - Chrome：`chrome://extensions`
+   - Edge：`edge://extensions`
+5. 开启右上角 **「开发者模式」**
+6. 点击 **「加载解压缩的扩展」**，选择项目的 `dist/` 目录
+7. 完成！点击浏览器工具栏的 NavPal 图标开始使用
+
+### 方式三：GitHub Release 安装
+
+从 [Releases](https://github.com/panris/navpal-extension/releases) 页面下载最新 ZIP 包，解压后在浏览器开发者模式下加载。
 
 ## 技术栈
 
 | 类别 | 技术 |
 |------|------|
 | 框架 | React 18 + TypeScript |
-| 构建 | Vite + CRX/RMP |
+| 构建 | Vite 5 |
 | 规范 | Chrome Manifest V3 |
-| 状态 | Zustand |
-| 样式 | Tailwind CSS |
-| 存储 | chrome.storage.local |
+| 状态 | Zustand (persist → chrome.storage.local) |
+| 样式 | Tailwind CSS 3 |
+| 拖拽 | @dnd-kit/core + @dnd-kit/sortable |
+| 图标 | Lucide React |
 
 ## 项目结构
 
@@ -27,45 +63,24 @@
 navpal-extension/
 ├── src/
 │   ├── popup/          # Popup 视图
+│   ├── fullpage/       # 完整页面视图
 │   ├── background/     # Service Worker
-│   ├── content/        # Content Scripts
-│   ├── components/     # 公共组件
+│   ├── components/     # 15 个公共组件
 │   ├── hooks/          # 自定义 Hooks
 │   ├── stores/         # Zustand Store
-│   ├── utils/          # 工具函数
+│   ├── utils/          # 工具函数 (i18n/导入导出/可见性等)
+│   ├── constants/      # 常量定义
 │   └── types/          # TypeScript 类型
 ├── public/
+│   └── manifest.json   # 扩展 manifest
+├── docs/               # 文档
+│   ├── PUBLISH_TO_EDGE_STORE.md   # Edge 商店上架指南
+│   ├── PUBLISH_TO_CHROME_STORE.md # Chrome 商店上架指南
+│   ├── privacy-policy.html        # 隐私政策页面
+│   └── OPTIMIZATION_TASKS.md     # 优化任务清单
+├── scripts/            # 构建脚本
 ├── package.json
 └── README.md
-```
-
-## 任务看板
-
-| # | 任务 | 优先级 | 状态 |
-|---|------|--------|------|
-| 1 | Manifest V3 项目初始化 | P0 | ⏳ |
-| 2 | Popup 基础框架 | P0 | ⏳ |
-| 3 | 分组 CRUD + 拖拽 | P0 | ⏳ |
-| 4 | 网站 CRUD + 拖拽 | P0 | ⏳ |
-| 5 | CN/Global 标签系统 | P0 | ⏳ |
-| 6 | 隐藏模式 | P0 | ⏳ |
-| 7 | 全量无痕模式 | P0 | ⏳ |
-| 8 | Seed Data | P1 | ⏳ |
-| 9 | 性能优化 | P1 | ⏳ |
-| 10 | 快捷搜索 | P1 | ⏳ |
-
-## 图标说明
-
-Chrome 扩展需要 PNG 格式图标。请使用以下命令生成（或手动转换为 PNG）:
-
-```bash
-# 安装 convert (ImageMagick)
-brew install imagemagick
-
-# 转换 SVG 为 PNG
-convert public/icons/icon16.svg public/icons/icon16.png
-convert public/icons/icon48.svg public/icons/icon48.png
-convert public/icons/icon128.svg public/icons/icon128.png
 ```
 
 ## 开发指南
@@ -74,12 +89,16 @@ convert public/icons/icon128.svg public/icons/icon128.png
 # 安装依赖
 npm install
 
-# 开发模式
+# 开发模式 (热更新)
 npm run dev
 
-# 构建
+# 构建生产版本
 npm run build
 ```
+
+## 隐私
+
+所有书签数据和设置均存储在本地浏览器中，不会上传到任何服务器。[隐私政策](./docs/privacy-policy.html)
 
 ## License
 

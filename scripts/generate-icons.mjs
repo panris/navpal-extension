@@ -1,4 +1,4 @@
-// 生成扩展图标
+// 生成扩展图标（16/48/128 用于 manifest + 512 用于商店列表页）
 import sharp from 'sharp';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -7,10 +7,9 @@ import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 
-const sizes = [128];
+// 输出到 dist/icons/，与 manifest.json 中的路径一致
 const iconsDir = join(rootDir, 'dist', 'icons');
 
-// 简单的SVG图标内容
 const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -28,7 +27,8 @@ async function generateIcons() {
 
   const svgBuffer = Buffer.from(svgIcon);
 
-  for (const size of sizes) {
+  // Manifest 所需尺寸（Edge 和 Chrome 均要求 16/48/128 PNG）
+  for (const size of [16, 48, 128]) {
     const pngPath = join(iconsDir, `icon${size}.png`);
     await sharp(svgBuffer)
       .resize(size, size)
@@ -37,7 +37,7 @@ async function generateIcons() {
     console.log(`✓ Generated icon${size}.png`);
   }
 
-  // 512尺寸（用于Chrome Web Store listing）
+  // 512 尺寸用于商店提交页面（Edge Partner Center 和 Chrome Web Store）
   await sharp(svgBuffer)
     .resize(512, 512)
     .png()

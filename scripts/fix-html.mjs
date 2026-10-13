@@ -22,4 +22,16 @@ function walk(dir) {
   }
 }
 walk(distDir);
+
+// 删除 dist/icons/ 中的 SVG 文件（manifest 已改用 PNG）
+const iconsDir = path.join(distDir, 'icons');
+if (fs.existsSync(iconsDir)) {
+  for (const f of fs.readdirSync(iconsDir)) {
+    if (f.endsWith('.svg')) {
+      fs.unlinkSync(path.join(iconsDir, f));
+      console.log(`✓ Removed unused ${path.relative(distDir, path.join(iconsDir, f))}`);
+    }
+  }
+}
+
 console.log('crossorigin attributes removed.');
