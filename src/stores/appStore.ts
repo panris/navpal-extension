@@ -345,12 +345,6 @@ export const useVisibleBookmarks = () =>
     (a, b) => a.length === b.length && a.every((bm, i) => bm.id === b[i].id)
   );
 
-// 获取当前有效语言
-function getCurrentLang(): 'zh' | 'en' {
-  const pref = useAppStore.getState().langPref;
-  return getEffectiveLang(pref);
-}
-
 // ─── Helper Functions ──────────────────────────────────────────────
 
 // 判断书签在指定分组中是否可见
@@ -379,37 +373,6 @@ export function isBookmarkVisibleInGroup(bookmark: Bookmark, groupId: string, is
 
   return true;
 }
-
-// 语言感知的书签 Selector - 根据当前语言过滤分组和书签
-export const useLangGroupBookmarks = (groupId: string | null) =>
-  useAppStore((state) => {
-    const lang = getCurrentLang();
-    const isRevealMode = state.isRevealMode;
-
-    // 过滤分组
-    const visibleGroups = state.groups.filter((g) => !g.hidden || isRevealMode);
-
-    // 过滤书签
-    const filteredBookmarks = state.bookmarks.filter((b) => {
-      // 如果指定了分组，只显示该分组的书签
-      if (groupId !== null && b.groupId !== groupId) return false;
-
-      // 检查可见性
-      if (!isBookmarkVisibleInGroup(b, b.groupId, isRevealMode)) return false;
-
-      // 语言过滤：Global 服务总是显示，CN 服务根据语言判断
-      if (b.region === 'CN' && lang === 'en') {
-        return false;
-      }
-
-      return true;
-    });
-
-    // 按 order 排序 (spread to avoid mutating the original array)
-    const sortedBookmarks = [...filteredBookmarks].sort((a, b) => a.order - b.order);
-
-    return { groups: visibleGroups, bookmarks: sortedBookmarks };
-  });
 
 // ─── Group Name Helper ────────────────────────────────────────────
 // 根据语言获取分组显示名称

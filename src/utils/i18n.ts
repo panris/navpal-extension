@@ -1,7 +1,7 @@
 // 集中式国际化工具
 // 所有 UI 文本在此定义，根据当前语言自动切换
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore, subscribeLang, getEffectiveLang } from '@/stores/appStore';
 import type { LangPref } from '@/types';
 
@@ -165,17 +165,6 @@ export function useCurrentLang(): 'zh' | 'en' {
   }, []);
 
   return lang;
-}
-
-// ─── Hook: 获取翻译文本 ────────────────────────────────────────
-export function useT(): (label: UILabel) => string {
-  const lang = useCurrentLang();
-  return useCallback((label: UILabel) => getText(label, lang), [lang]);
-}
-
-// ─── 数字格式化（根据语言）──────────────────────────────────────
-export function formatCount(count: number, lang: 'zh' | 'en'): string {
-  return lang === 'zh' ? `${count} 个` : `${count}`;
 }
 
 // ─── 语言选项 ──────────────────────────────────────────────────
